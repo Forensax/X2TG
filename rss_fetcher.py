@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from config import PROXY_URL
 
-STATE_FILE = os.getenv("STATE_FILE", "state.json")
+STATE_FILE = "state.json"
 
 
 def get_proxy_dict():
@@ -73,27 +73,31 @@ def fetch_new_tweets(rss_url):
         return []
 
     last_link = load_last_link(rss_url)
-    new_tweets = []
+    entries_to_process = []
 
     # 首次运行针对该 URL
     if last_link is None:
-        print(f"[{rss_url}] 首次运行，标记最新一条推文为已读，不进行推送。")
+        print(f"[{rss_url}] 首次运行，选取最新一条推文进行推送。")
         if feed.entries:
-            first_link = feed.entries[0].get('link', '')
-            if first_link:
-                save_last_link(rss_url, first_link)
-        return []
+            # 只取最新的一条
+            entries_to_process = [feed.entries[0]]
+            # 注意：不立即保存状态，等待推送成功后由主程序保存
+    else:
+        # 非首次运行，获取所有新推文
+        for entry in feed.entries:
+            current_link = entry.get('link', '')
+            if current_link == last_link:
+                break
+            if not current_link:
+                continue
+            entries_to_process.append(entry)
 
-    # 遍历 RSS 条目
-    for entry in feed.entries:
+    new_tweets = []
+    
+    # 遍历需要处理的条目
+    for entry in entries_to_process:
         current_link = entry.get('link', '')
         
-        if current_link == last_link:
-            break
-        
-        if not current_link:
-            continue
-
         # 强制转换为字符串
         description = str(entry.get('description', ''))
         
@@ -107,7 +111,6 @@ def fetch_new_tweets(rss_url):
                     src = img.get('src')
                     if src:
                         # 过滤掉一些特定的跟踪像素或小图标（可选）
-                        # RSSHub 的 Twitter 输出通常图片质量较好，直接用
                         images.append(src)
         except Exception as e:
             print(f"解析图片出错: {e}")
@@ -133,4 +136,6 @@ def fetch_new_tweets(rss_url):
         }
         new_tweets.append(tweet_data)
 
+    # 返回按时间正序排列的推文（旧 -> 新）
+    # 对于首次运行只有一条，reversed 也没影响
     return list(reversed(new_tweets))
