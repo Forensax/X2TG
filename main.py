@@ -2,15 +2,16 @@ import time
 import schedule
 import signal
 import sys
-from config import CHECK_INTERVAL
+from config import CHECK_INTERVAL, RSS_URLS
 from rss_fetcher import fetch_new_tweets, save_last_link
 from translator import translate_tweet
 from notifier import send_telegram_message
 
-def job():
-    print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 开始检查新推文...")
+def process_rss_url(rss_url):
+    """处理单个 RSS URL"""
+    print(f"\n--- 正在处理 RSS: {rss_url} ---")
     try:
-        new_tweets = fetch_new_tweets()
+        new_tweets = fetch_new_tweets(rss_url)
         
         if not new_tweets:
             print("没有新推文。")
@@ -19,7 +20,7 @@ def job():
         print(f"发现 {len(new_tweets)} 条新推文，准备处理...")
 
         for i, tweet in enumerate(new_tweets, 1):
-            print(f"--- 处理第 {i}/{len(new_tweets)} 条 ---")
+            print(f"--- 处理第 {i}/{len(new_tweets)} 条 ({tweet['author']}) ---")
             
             # 翻译
             print("正在翻译...")
@@ -29,16 +30,28 @@ def job():
             print("正在推送...")
             send_telegram_message(tweet['content'], translated_content, tweet['link'])
             
-            # 保存进度 (每成功一条就保存一条，防止中断后重复推送)
-            save_last_link(tweet['link'])
+            # 保存进度 (每成功一条就保存一条)
+            save_last_link(rss_url, tweet['link'])
             
             # 避免触发 API 限制
             time.sleep(3)
-
-        print("所有新推文处理完成。")
-
+            
     except Exception as e:
-        print(f"任务执行出错: {e}")
+        print(f"处理 RSS 出错 [{rss_url}]: {e}")
+
+def job():
+    print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 开始本轮检查...")
+    
+    if not RSS_URLS:
+        print("未配置任何 RSS URL。")
+        return
+
+    for url in RSS_URLS:
+        process_rss_url(url)
+        # 每个 RSS 源处理完后休息一下
+        time.sleep(2)
+        
+    print("\n本轮检查结束。")
 
 def signal_handler(sig, frame):
     print('\n程序已停止。')
@@ -50,6 +63,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
 
     print(f"程序已启动。检查间隔: {CHECK_INTERVAL} 秒")
+    print(f"已配置监控 {len(RSS_URLS)} 个 RSS 源")
     
     # 立即运行一次
     job()
