@@ -3,6 +3,8 @@ import os
 import json
 import html2text
 import requests
+from urllib.parse import urlparse
+import ipaddress
 from bs4 import BeautifulSoup
 from config import PROXY_URL
 
@@ -13,6 +15,28 @@ def get_proxy_dict():
     if PROXY_URL:
         return {"http": PROXY_URL, "https": PROXY_URL}
     return None
+
+def is_private_url(url):
+    """检查 URL 是否指向私有 IP 地址 (内网)"""
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+            
+        # 常见本地标识
+        if hostname.lower() == 'localhost':
+            return True
+            
+        # 尝试判断是否为 IP 地址
+        try:
+            ip = ipaddress.ip_address(hostname)
+            return ip.is_private
+        except ValueError:
+            # 不是 IP 地址 (可能是域名)，暂不视为私有地址
+            return False
+    except Exception:
+        return False
 
 def load_state():
     """加载整个状态字典"""
@@ -57,6 +81,12 @@ def fetch_new_tweets(rss_url):
     feed = None
     try:
         proxies = get_proxy_dict()
+        
+        # 如果是内网地址，强制不使用代理
+        if is_private_url(rss_url):
+            # print(f"检测到内网地址 {rss_url}，跳过代理配置")
+            proxies = None
+            
         response = requests.get(rss_url, proxies=proxies, timeout=20)
         response.raise_for_status()
         feed = feedparser.parse(response.content)
