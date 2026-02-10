@@ -4,10 +4,11 @@
 
 ## ✨ 功能特性
 
-*   **实时监控**: 定时检查 RSSHub 订阅源获取最新推文。
-*   **AI 翻译**: 集成 Google Gemini Pro/Flash 模型，提供流畅、自然的中文翻译。
+*   **多账号监控**: 支持同时监控多个 Twitter 账号，只需在配置中用逗号分隔多个 RSS URL。
+*   **AI 翻译**: 集成 Google Gemini Pro/Flash 模型，提供流畅、自然的中文翻译（默认为 `gemini-3-flash-preview`）。
+*   **智能重试**: 翻译失败自动重试机制（最多 3 次），并支持指数退避，确保服务稳定性。
 *   **格式保留**: 翻译过程中自动保留原文链接、Hashtag (#标签) 和用户提及 (@用户)。
-*   **智能去重**: 本地记录已处理的推文，避免重复推送（重启程序后依然有效）。
+*   **智能去重**: 本地分别记录每个 RSS 源已处理的推文，避免重复推送（重启程序后依然有效）。
 *   **防封禁**: 内置请求间隔和错误重试机制，防止触发 API 速率限制。
 *   **代理支持**: 支持配置 HTTP/HTTPS 代理，方便国内网络环境使用。
 
@@ -39,8 +40,8 @@
     
     使用文本编辑器打开 `.env` 文件并填入以下信息：
     ```ini
-    # RSSHub 订阅地址
-    RSS_URL=https://rsshub.app/twitter/user/elonmusk
+    # RSSHub 订阅地址 (支持多个，用逗号分隔)
+    RSS_URL=https://rsshub.app/twitter/user/elonmusk,https://rsshub.app/twitter/user/NASA
     
     # Google Gemini API Key
     GEMINI_API_KEY=your_gemini_api_key_here
@@ -67,18 +68,18 @@ python main.py
 ```
 
 程序启动后：
-1.  **首次运行**：会自动标记当前最新的一条推文为"已读"，**不会**推送历史消息（防止刷屏）。
+1.  **首次运行**：会自动标记所有配置账号的最新一条推文为"已读"，**不会**推送历史消息（防止刷屏）。
 2.  之后每隔 `CHECK_INTERVAL` 秒检查一次新推文。
 3.  发现新推文后，会自动翻译并推送到 Telegram。
 
 ## 📂 项目结构
 
-*   `main.py`: 程序入口，负责调度和主循环。
-*   `config.py`: 配置加载模块。
-*   `rss_fetcher.py`: 负责从 RSSHub 获取并解析数据。
-*   `translator.py`: 调用 Google Gemini API 进行翻译。
+*   `main.py`: 程序入口，负责多任务调度和主循环。
+*   `config.py`: 配置加载模块，支持解析多 RSS URL。
+*   `rss_fetcher.py`: 负责从 RSSHub 获取并解析数据，独立管理每个源的状态。
+*   `translator.py`: 调用 Google Gemini API 进行翻译，包含重试逻辑。
 *   `notifier.py`: 调用 Telegram Bot API 发送消息。
-*   `state.json`: (自动生成) 存储最后一条处理的推文链接。
+*   `state.json`: (自动生成) 存储每个 RSS 源最后处理的推文链接。
 
 ## ⚠️ 注意事项
 
