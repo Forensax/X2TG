@@ -1,6 +1,11 @@
 import requests
 import html
-from config import TG_BOT_TOKEN, TG_CHAT_ID
+from config import TG_BOT_TOKEN, TG_CHAT_ID, PROXY_URL
+
+def get_proxy_dict():
+    if PROXY_URL:
+        return {"http": PROXY_URL, "https": PROXY_URL}
+    return None
 
 def send_telegram_message(author, original_text, translated_text, link, images=None):
     """
@@ -57,9 +62,10 @@ def send_telegram_message(author, original_text, translated_text, link, images=N
         payload["text"] = body
 
     url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/{method}"
+    proxies = get_proxy_dict()
 
     try:
-        response = requests.post(url, json=payload, timeout=20)
+        response = requests.post(url, json=payload, timeout=20, proxies=proxies)
         response.raise_for_status()
         print(f"成功推送到 Telegram: {link} (method={method})")
     except Exception as e:
@@ -77,7 +83,7 @@ def send_telegram_message(author, original_text, translated_text, link, images=N
                 payload["disable_web_page_preview"] = False
                 
                 url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
-                response = requests.post(url, json=payload, timeout=20)
+                response = requests.post(url, json=payload, timeout=20, proxies=proxies)
                 response.raise_for_status()
                 print(f"降级发送成功: {link}")
             except Exception as e2:
