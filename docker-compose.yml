@@ -7,5 +7,6 @@ services:
       - ./.env:/app/.env
       - ./data:/app/data
     environment:
+      - PYTHONUNBUFFERED=1 # 强制 Python 实时输出日志
       - STATE_FILE=/app/data/state.json
       - TZ=Asia/Shanghai

@@ -4,6 +4,8 @@ WORKDIR /app
 
 # 设置时区为上海
 ENV TZ=Asia/Shanghai
+# 确保 Python 输出不被缓存，这样日志可以在 Docker 中实时显示
+ENV PYTHONUNBUFFERED=1
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY requirements.txt .
