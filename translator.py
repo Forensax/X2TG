@@ -9,8 +9,8 @@ if GEMINI_API_KEY:
     try:
         http_options = None
         if GEMINI_BASE_URL:
-            # 如果配置了 Base URL，设置 api_endpoint
-            http_options = {'api_endpoint': GEMINI_BASE_URL}
+            # 如果配置了 Base URL，设置 base_url
+            http_options = {'base_url': GEMINI_BASE_URL}
             print(f"使用自定义 Gemini Base URL: {GEMINI_BASE_URL}")
             
         client = genai.Client(api_key=GEMINI_API_KEY, http_options=http_options)
