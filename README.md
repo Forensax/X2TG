@@ -13,6 +13,7 @@
 *   **智能去重**: 本地分别记录每个 RSS 源已处理的推文，避免重复推送（重启程序后依然有效）。
 *   **防封禁**: 内置请求间隔和错误重试机制，防止触发 API 速率限制。
 *   **代理支持**: 支持配置 HTTP/HTTPS 代理，方便国内网络环境使用。
+*   **自定义 Base URL**: 支持自定义 Gemini API 端点（`GEMINI_BASE_URL`），便于对接反向代理。
 
 ## 🛠️ 前置要求
 
@@ -48,6 +49,9 @@
     
     # Google Gemini API Key
     GEMINI_API_KEY=your_gemini_api_key_here
+
+    # (可选) 自定义 Gemini API Base URL (例如使用反向代理时)
+    # GEMINI_BASE_URL=https://generativelanguage.googleapis.com
     
     # Telegram Bot Token
     TG_BOT_TOKEN=your_telegram_bot_token

@@ -1,12 +1,22 @@
 from google import genai
 from google.genai import types
-from config import GEMINI_API_KEY
+from config import GEMINI_API_KEY, GEMINI_BASE_URL
 import time
 import textwrap
 
 # 初始化客户端
 if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    try:
+        http_options = None
+        if GEMINI_BASE_URL:
+            # 如果配置了 Base URL，设置 api_endpoint
+            http_options = {'api_endpoint': GEMINI_BASE_URL}
+            print(f"使用自定义 Gemini Base URL: {GEMINI_BASE_URL}")
+            
+        client = genai.Client(api_key=GEMINI_API_KEY, http_options=http_options)
+    except Exception as e:
+        print(f"初始化 Gemini 客户端失败: {e}")
+        client = None
 else:
     print("警告: 未配置 GEMINI_API_KEY，无法进行翻译。")
     client = None

@@ -37,6 +37,7 @@ for item in rss_env.split(","):
 RSS_URLS = [c["url"] for c in RSS_CONFIGS]
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL")
 TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
 TG_CHAT_ID = os.getenv("TG_CHAT_ID")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "1800"))
