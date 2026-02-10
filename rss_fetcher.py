@@ -6,7 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 from config import PROXY_URL
 
-STATE_FILE = "state.json"
+STATE_FILE = os.getenv("STATE_FILE", "state.json")
+
 
 def get_proxy_dict():
     if PROXY_URL:

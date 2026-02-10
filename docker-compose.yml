@@ -1,0 +1,11 @@
+version: '3'
+services:
+  rss-bot:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./.env:/app/.env
+      - ./data:/app/data
+    environment:
+      - STATE_FILE=/app/data/state.json
+      - TZ=Asia/Shanghai
