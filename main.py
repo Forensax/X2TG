@@ -2,14 +2,17 @@ import time
 import schedule
 import signal
 import sys
-from config import CHECK_INTERVAL, RSS_URLS
+from config import CHECK_INTERVAL, RSS_CONFIGS
 from rss_fetcher import fetch_new_tweets, save_last_link
 from translator import translate_tweet
 from notifier import send_telegram_message
 
-def process_rss_url(rss_url):
-    """处理单个 RSS URL"""
-    print(f"\n--- 正在处理 RSS: {rss_url} ---")
+def process_rss_config(config):
+    """处理单个 RSS 配置"""
+    rss_url = config['url']
+    need_translate = config['translate']
+    
+    print(f"\n--- 正在处理 RSS: {rss_url} (翻译: {need_translate}) ---")
     try:
         new_tweets = fetch_new_tweets(rss_url)
         
@@ -23,8 +26,12 @@ def process_rss_url(rss_url):
             print(f"--- 处理第 {i}/{len(new_tweets)} 条 ({tweet['author']}) ---")
             
             # 翻译
-            print("正在翻译...")
-            translated_content = translate_tweet(tweet['content'])
+            translated_content = ""
+            if need_translate:
+                print("正在翻译...")
+                translated_content = translate_tweet(tweet['content'])
+            else:
+                print("跳过翻译...")
             
             # 发送
             print("正在推送...")
@@ -48,12 +55,12 @@ def process_rss_url(rss_url):
 def job():
     print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 开始本轮检查...")
     
-    if not RSS_URLS:
+    if not RSS_CONFIGS:
         print("未配置任何 RSS URL。")
         return
 
-    for url in RSS_URLS:
-        process_rss_url(url)
+    for config in RSS_CONFIGS:
+        process_rss_config(config)
         # 每个 RSS 源处理完后休息一下
         time.sleep(2)
         
@@ -69,7 +76,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
 
     print(f"程序已启动。检查间隔: {CHECK_INTERVAL} 秒")
-    print(f"已配置监控 {len(RSS_URLS)} 个 RSS 源")
+    print(f"已配置监控 {len(RSS_CONFIGS)} 个 RSS 源")
     
     # 立即运行一次
     job()

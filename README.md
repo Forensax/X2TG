@@ -5,6 +5,8 @@
 ## ✨ 功能特性
 
 *   **多账号监控**: 支持同时监控多个 Twitter 账号，只需在配置中用逗号分隔多个 RSS URL。
+*   **翻译控制**: 支持为每个账号单独配置是否开启翻译。使用 `@T`（开启，默认）或 `@F`（关闭）后缀。
+    *   例如：`https://rsshub.app/twitter/user/elonmusk@T,https://rsshub.app/twitter/user/NASA@F`
 *   **AI 翻译**: 集成 Google Gemini Pro/Flash 模型，提供流畅、自然的中文翻译（默认为 `gemini-3-flash-preview`）。
 *   **智能重试**: 翻译失败自动重试机制（最多 3 次），并支持指数退避，确保服务稳定性。
 *   **格式保留**: 翻译过程中自动保留原文链接、Hashtag (#标签) 和用户提及 (@用户)。
@@ -41,7 +43,8 @@
     使用文本编辑器打开 `.env` 文件并填入以下信息：
     ```ini
     # RSSHub 订阅地址 (支持多个，用逗号分隔)
-    RSS_URL=https://rsshub.app/twitter/user/elonmusk,https://rsshub.app/twitter/user/NASA
+    # 格式: URL@T (翻译) 或 URL@F (不翻译)
+    RSS_URL=https://rsshub.app/twitter/user/elonmusk@T,https://rsshub.app/twitter/user/NASA@F
     
     # Google Gemini API Key
     GEMINI_API_KEY=your_gemini_api_key_here
@@ -75,7 +78,7 @@ python main.py
 ## 📂 项目结构
 
 *   `main.py`: 程序入口，负责多任务调度和主循环。
-*   `config.py`: 配置加载模块，支持解析多 RSS URL。
+*   `config.py`: 配置加载模块，支持解析多 RSS URL 及翻译标记。
 *   `rss_fetcher.py`: 负责从 RSSHub 获取并解析数据，独立管理每个源的状态。
 *   `translator.py`: 调用 Google Gemini API 进行翻译，包含重试逻辑。
 *   `notifier.py`: 调用 Telegram Bot API 发送消息。

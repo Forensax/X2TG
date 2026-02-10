@@ -12,17 +12,21 @@ def send_telegram_message(author, original_text, translated_text, link, images=N
         return
 
     safe_original = html.escape(original_text)
-    safe_translated = html.escape(translated_text)
     safe_author = html.escape(author)
     
-    # 构建消息头部和正文
     header = f"📢 <b>{safe_author}</b>\n\n"
-    body = (
-        f"{header}"
-        f"<b>原文：</b>\n{safe_original}\n\n"
-        f"<b>翻译：</b>\n{safe_translated}\n\n"
-        f"🔗 <a href='{link}'>查看推文</a>"
-    )
+    
+    # 动态构建内容
+    content_parts = [header, f"<b>原文：</b>\n{safe_original}\n\n"]
+    
+    # 只有当翻译文本存在时才添加
+    if translated_text:
+        safe_translated = html.escape(translated_text)
+        content_parts.append(f"<b>翻译：</b>\n{safe_translated}\n\n")
+        
+    content_parts.append(f"🔗 <a href='{link}'>查看推文</a>")
+    
+    body = "".join(content_parts)
 
     # 默认配置 (sendMessage)
     method = "sendMessage"
