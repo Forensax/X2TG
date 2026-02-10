@@ -4,3 +4,4 @@ requests
 python-dotenv
 schedule
 html2text
+beautifulsoup4

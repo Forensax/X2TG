@@ -28,7 +28,13 @@ def process_rss_url(rss_url):
             
             # 发送
             print("正在推送...")
-            send_telegram_message(tweet['content'], translated_content, tweet['link'])
+            send_telegram_message(
+                author=tweet['author'],
+                original_text=tweet['content'], 
+                translated_text=translated_content, 
+                link=tweet['link'],
+                images=tweet.get('images', [])
+            )
             
             # 保存进度 (每成功一条就保存一条)
             save_last_link(rss_url, tweet['link'])

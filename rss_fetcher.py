@@ -3,6 +3,7 @@ import os
 import json
 import html2text
 import requests
+from bs4 import BeautifulSoup
 from config import PROXY_URL
 
 STATE_FILE = "state.json"
@@ -18,7 +19,6 @@ def load_state():
         try:
             with open(STATE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # 简单的格式校验，确保是字典
                 if isinstance(data, dict):
                     return data
         except Exception as e:
@@ -93,11 +93,29 @@ def fetch_new_tweets(rss_url):
         if not current_link:
             continue
 
-        # 强制转换为字符串并清理
+        # 强制转换为字符串
         description = str(entry.get('description', ''))
+        
+        # 1. 提取图片
+        images = []
+        try:
+            soup = BeautifulSoup(description, 'html.parser')
+            for img in soup.find_all('img'):
+                # 确保 img 是 Tag 对象
+                if hasattr(img, 'get'):
+                    src = img.get('src')
+                    if src:
+                        # 过滤掉一些特定的跟踪像素或小图标（可选）
+                        # RSSHub 的 Twitter 输出通常图片质量较好，直接用
+                        images.append(src)
+        except Exception as e:
+            print(f"解析图片出错: {e}")
+
+        # 2. 清理文本
         h = html2text.HTML2Text()
         h.ignore_links = False 
         h.body_width = 0
+        h.ignore_images = True # 忽略原HTML中的图片标签，因为我们已经提取了
         clean_content = h.handle(description).strip()
         
         # 安全获取作者
@@ -109,7 +127,8 @@ def fetch_new_tweets(rss_url):
             "link": current_link,
             "author": author,
             "content": clean_content,
-            "published": entry.get('published', '')
+            "published": entry.get('published', ''),
+            "images": images
         }
         new_tweets.append(tweet_data)
 

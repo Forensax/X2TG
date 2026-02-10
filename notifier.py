@@ -2,36 +2,79 @@ import requests
 import html
 from config import TG_BOT_TOKEN, TG_CHAT_ID
 
-def send_telegram_message(original_text, translated_text, link):
+def send_telegram_message(author, original_text, translated_text, link, images=None):
     """
     发送消息到 Telegram
+    支持发送图片
     """
     if not TG_BOT_TOKEN or not TG_CHAT_ID:
         print("Telegram 配置缺失，无法发送消息。")
         return
 
-    # 对文本进行 HTML 转义，防止 HTML 注入导致解析错误
     safe_original = html.escape(original_text)
     safe_translated = html.escape(translated_text)
+    safe_author = html.escape(author)
     
-    # 构建消息内容
-    message = (
+    # 构建消息头部和正文
+    header = f"📢 <b>{safe_author}</b>\n\n"
+    body = (
+        f"{header}"
         f"<b>原文：</b>\n{safe_original}\n\n"
         f"<b>翻译：</b>\n{safe_translated}\n\n"
         f"🔗 <a href='{link}'>查看推文</a>"
     )
 
-    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
+    # 默认配置 (sendMessage)
+    method = "sendMessage"
     payload = {
         "chat_id": TG_CHAT_ID,
-        "text": message,
         "parse_mode": "HTML",
-        "disable_web_page_preview": True # 可选，禁用预览以保持整洁
+        # 如果是纯文本发送，开启预览可以让 TG 自动抓取推文图片
+        # 如果后面决定用 sendPhoto，这个参数会被移除
+        "disable_web_page_preview": False 
     }
 
+    # 如果有图片，尝试使用 sendPhoto
+    if images and len(images) > 0:
+        # Telegram Caption 限制 1024 字符
+        # HTML 标签也会占用字符数，粗略判断
+        if len(body) <= 1000:
+            method = "sendPhoto"
+            payload["photo"] = images[0]
+            payload["caption"] = body
+            # sendPhoto 不支持 disable_web_page_preview
+            if "disable_web_page_preview" in payload:
+                del payload["disable_web_page_preview"]
+        else:
+            # 如果超长，回退到 sendMessage
+            print("内容过长，跳过图片发送，改用链接预览。")
+            payload["text"] = body
+    else:
+        payload["text"] = body
+
+    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/{method}"
+
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=20)
         response.raise_for_status()
-        print(f"成功推送到 Telegram: {link}")
+        print(f"成功推送到 Telegram: {link} (method={method})")
     except Exception as e:
-        print(f"推送到 Telegram 失败: {e}")
+        print(f"推送到 Telegram 失败 ({method}): {e}")
+        
+        # 如果 sendPhoto 失败（比如图片 URL 无效），降级重试 sendMessage
+        if method == "sendPhoto":
+            print("尝试降级为纯文本发送...")
+            try:
+                # 清理 payload，转为 sendMessage 格式
+                if "photo" in payload: del payload["photo"]
+                if "caption" in payload: del payload["caption"]
+                
+                payload["text"] = body
+                payload["disable_web_page_preview"] = False
+                
+                url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
+                response = requests.post(url, json=payload, timeout=20)
+                response.raise_for_status()
+                print(f"降级发送成功: {link}")
+            except Exception as e2:
+                print(f"降级发送也失败: {e2}")
