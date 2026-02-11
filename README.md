@@ -17,7 +17,7 @@
 
 ## 🛠️ 前置要求
 
-*   Python 3.8+
+*   Python 3.13
 *   [Google Gemini API Key](https://aistudio.google.com/)
 *   [Telegram Bot Token](https://t.me/BotFather)
 *   有效的 RSSHub 订阅链接 (例如: `https://rsshub.app/twitter/user/elonmusk`)
