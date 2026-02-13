@@ -9,3 +9,4 @@ state.json
 .idea/
 .vscode/
 *.log
+node_modules/
