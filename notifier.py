@@ -88,3 +88,28 @@ def send_telegram_message(author, original_text, translated_text, link, images=N
                 print(f"降级发送成功: {link}")
             except Exception as e2:
                 print(f"降级发送也失败: {e2}")
+
+def send_plain_message(text):
+    """
+    发送纯文本消息到 Telegram
+    """
+    if not TG_BOT_TOKEN or not TG_CHAT_ID:
+        print("Telegram 配置缺失，无法发送消息。")
+        return
+
+    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
+    proxies = get_proxy_dict()
+    
+    payload = {
+        "chat_id": TG_CHAT_ID,
+        "text": text,
+        "parse_mode": "HTML"
+    }
+
+    try:
+        response = requests.post(url, json=payload, timeout=20, proxies=proxies)
+        response.raise_for_status()
+        print(f"系统消息已发送: {text}")
+    except Exception as e:
+        print(f"发送系统消息失败: {e}")
+

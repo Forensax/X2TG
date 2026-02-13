@@ -70,9 +70,12 @@ def save_last_link(rss_url, link):
     save_state(state)
     print(f"[{rss_url[:30]}...] 进度已更新")
 
-def fetch_new_tweets(rss_url):
-    """获取指定 RSS URL 自上次检查以来的新推文"""
+def fetch_new_tweets(rss_url, only_latest=False):
+    """获取指定 RSS URL 自上次检查以来的新推文
+    only_latest=True: 仅获取最新的一条推文（用于启动检查）
+    """
     if not rss_url:
+
         print("错误: 传入的 RSS URL 为空")
         return []
 
@@ -102,18 +105,16 @@ def fetch_new_tweets(rss_url):
         print(f"未获取到任何推文: {rss_url}")
         return []
 
-    last_link = load_last_link(rss_url)
-    entries_to_process = []
-
-    # 首次运行针对该 URL
-    if last_link is None:
-        print(f"[{rss_url}] 首次运行，选取最新一条推文进行推送。")
-        if feed.entries:
-            # 只取最新的一条
-            entries_to_process = [feed.entries[0]]
-            # 注意：不立即保存状态，等待推送成功后由主程序保存
+    if only_latest:
+        print(f"[{rss_url}] 启动检查，仅获取最新一条推文。")
+        entries_to_process = [feed.entries[0]]
     else:
-        # 非首次运行，获取所有新推文
+        last_link = load_last_link(rss_url)
+        entries_to_process = []
+        
+        # 遍历所有推文，直到找到上次处理的链接
+        # 如果 last_link 为 None (首次运行/新Feed)，则会处理 Feed 中的所有条目
+        # 这对于追溯历史或初始化状态是合理的
         for entry in feed.entries:
             current_link = entry.get('link', '')
             if current_link == last_link:
@@ -123,6 +124,7 @@ def fetch_new_tweets(rss_url):
             entries_to_process.append(entry)
 
     new_tweets = []
+
     
     # 遍历需要处理的条目
     for entry in entries_to_process:
