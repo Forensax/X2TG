@@ -1,10 +1,11 @@
-# Twitter/X to Telegram 自动翻译推送机器人
+# Twitter/X 多渠道自动翻译推送机器人
 
-这是一个基于 Python 的自动化机器人，能够监控指定 Twitter/X 用户的 RSSHub 订阅源，使用 Google Gemini 大模型将推文自动翻译成中文，并实时推送到 Telegram 频道或群组。
+这是一个基于 Python 的自动化机器人，能够监控指定 Twitter/X 用户的 RSSHub 订阅源，使用 Google Gemini 大模型将推文自动翻译成中文，并实时推送到 Telegram 和飞书应用机器人。
 
 ## ✨ 功能特性
 
 *   **多账号监控**: 支持同时监控多个 Twitter 账号，只需在配置中用逗号分隔多个 RSS URL。
+*   **多渠道通知**: 支持 Telegram + 飞书应用机器人，支持在配置中选择一个或多个渠道。
 *   **翻译控制**: 支持为每个账号单独配置是否开启翻译。使用 `@T`（开启，默认）或 `@F`（关闭）后缀。
     *   例如：`https://rsshub.app/twitter/user/elonmusk@T,https://rsshub.app/twitter/user/NASA@F`
 *   **AI 翻译**: 集成 Google Gemini Pro/Flash 模型，提供流畅、自然的中文翻译（默认为 `gemini-3-flash-preview`）。
@@ -19,7 +20,8 @@
 
 *   Python 3.13
 *   [Google Gemini API Key](https://aistudio.google.com/)
-*   [Telegram Bot Token](https://t.me/BotFather)
+*   [Telegram Bot Token](https://t.me/BotFather)（如启用 Telegram）
+*   [飞书自建应用](https://open.feishu.cn/)（如启用飞书应用机器人）
 *   有效的 RSSHub 订阅链接 (例如: `https://rsshub.app/twitter/user/elonmusk`)
 
 ## 🚀 安装步骤
@@ -58,6 +60,16 @@
     
     # 接收消息的 Chat ID (用户 ID 或 频道 ID)
     TG_CHAT_ID=your_chat_id
+
+    # 通知渠道，支持多个，逗号分隔
+    # 可选: telegram,feishu
+    NOTIFY_CHANNELS=telegram,feishu
+
+    # 飞书应用机器人配置
+    FEISHU_APP_ID=cli_xxx
+    FEISHU_APP_SECRET=your_feishu_app_secret
+    FEISHU_RECEIVE_ID_TYPE=chat_id
+    FEISHU_RECEIVE_IDS=oc_xxx,oc_yyy
     
     # 检查间隔 (秒)，默认 30 分钟
     CHECK_INTERVAL=1800
@@ -77,7 +89,7 @@ python main.py
 程序启动后：
 1.  **首次运行**：会自动标记所有配置账号的最新一条推文为"已读"，**不会**推送历史消息（防止刷屏）。
 2.  之后每隔 `CHECK_INTERVAL` 秒检查一次新推文。
-3.  发现新推文后，会自动翻译并推送到 Telegram。
+3.  发现新推文后，会自动翻译并推送到已启用渠道（Telegram/飞书）。
 
 ## 📂 项目结构
 
@@ -85,7 +97,7 @@ python main.py
 *   `config.py`: 配置加载模块，支持解析多 RSS URL 及翻译标记。
 *   `rss_fetcher.py`: 负责从 RSSHub 获取并解析数据，独立管理每个源的状态。
 *   `translator.py`: 调用 Google Gemini API 进行翻译，包含重试逻辑。
-*   `notifier.py`: 调用 Telegram Bot API 发送消息。
+*   `notifier.py`: 调用 Telegram Bot API 和飞书消息 API 发送消息。
 *   `state.json`: (自动生成) 存储每个 RSS 源最后处理的推文链接。
 
 ## ⚠️ 注意事项

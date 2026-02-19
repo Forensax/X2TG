@@ -1,5 +1,4 @@
 import os
-import sys
 from dotenv import load_dotenv
 
 # 加载环境变量
@@ -43,8 +42,62 @@ TG_CHAT_ID = os.getenv("TG_CHAT_ID")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "1800"))
 PROXY_URL = os.getenv("PROXY_URL")
 
+
+def parse_csv(value):
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+# 通知渠道配置，默认开启多个渠道
+NOTIFY_CHANNELS = [
+    channel.lower() for channel in parse_csv(os.getenv("NOTIFY_CHANNELS", "telegram,feishu"))
+]
+
+# 飞书应用机器人配置
+FEISHU_APP_ID = os.getenv("FEISHU_APP_ID")
+FEISHU_APP_SECRET = os.getenv("FEISHU_APP_SECRET")
+FEISHU_RECEIVE_ID_TYPE = os.getenv("FEISHU_RECEIVE_ID_TYPE", "chat_id")
+FEISHU_RECEIVE_IDS = parse_csv(os.getenv("FEISHU_RECEIVE_IDS", ""))
+FEISHU_API_BASE = os.getenv("FEISHU_API_BASE", "https://open.feishu.cn/open-apis")
+
+
+def build_enabled_channels():
+    enabled = []
+    requested = []
+
+    for channel in NOTIFY_CHANNELS:
+        if channel not in ("telegram", "feishu"):
+            print(f"警告: 不支持的通知渠道 '{channel}'，已忽略")
+            continue
+
+        if channel in requested:
+            continue
+        requested.append(channel)
+
+    for channel in requested:
+        if channel == "telegram":
+            if TG_BOT_TOKEN and TG_CHAT_ID:
+                enabled.append(channel)
+            else:
+                print("警告: Telegram 渠道未完整配置，已跳过 (需 TG_BOT_TOKEN + TG_CHAT_ID)")
+        elif channel == "feishu":
+            if FEISHU_APP_ID and FEISHU_APP_SECRET and FEISHU_RECEIVE_IDS:
+                enabled.append(channel)
+            else:
+                print(
+                    "警告: 飞书渠道未完整配置，已跳过 "
+                    "(需 FEISHU_APP_ID + FEISHU_APP_SECRET + FEISHU_RECEIVE_IDS)"
+                )
+
+    return enabled
+
+
+ENABLED_CHANNELS = build_enabled_channels()
+
 # 简单校验
 if not RSS_CONFIGS:
     print("错误: 请在 .env 文件中配置 RSS_URL (格式: URL@T,URL@F)")
-if not all([GEMINI_API_KEY, TG_BOT_TOKEN, TG_CHAT_ID]):
-    print("错误: 请在 .env 文件中配置必要的环境变量 (GEMINI_API_KEY, TG_BOT_TOKEN, TG_CHAT_ID)")
+if any(config["translate"] for config in RSS_CONFIGS) and not GEMINI_API_KEY:
+    print("错误: 检测到开启翻译的 RSS 源，但未配置 GEMINI_API_KEY")
+
+if not ENABLED_CHANNELS:
+    print("错误: 没有可用的通知渠道，请检查 NOTIFY_CHANNELS 及对应配置")

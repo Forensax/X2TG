@@ -2,7 +2,7 @@ import time
 import schedule
 import signal
 import sys
-from config import CHECK_INTERVAL, RSS_CONFIGS
+from config import CHECK_INTERVAL, RSS_CONFIGS, ENABLED_CHANNELS
 from rss_fetcher import fetch_new_tweets, save_last_link
 from translator import translate_tweet
 from notifier import send_telegram_message, send_plain_message
@@ -81,6 +81,7 @@ if __name__ == "__main__":
 
     print(f"程序已启动。检查间隔: {CHECK_INTERVAL} 秒")
     print(f"已配置监控 {len(RSS_CONFIGS)} 个 RSS 源")
+    print(f"已启用通知渠道: {', '.join(ENABLED_CHANNELS) if ENABLED_CHANNELS else '无'}")
     
     # --- 启动通知流程 ---
     print("正在发送启动通知...")
