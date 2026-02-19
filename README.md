@@ -66,6 +66,7 @@
     NOTIFY_CHANNELS=telegram,feishu
 
     # 飞书应用机器人配置
+    # 如何获取用户的 Open ID https://open.feishu.cn/document/faq/trouble-shooting/how-to-obtain-openid
     FEISHU_APP_ID=cli_xxx
     FEISHU_APP_SECRET=your_feishu_app_secret
     FEISHU_RECEIVE_ID_TYPE=chat_id
