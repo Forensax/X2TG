@@ -186,7 +186,7 @@ def _build_feishu_card(author, original_text, translated_text, link, image_key=N
     elements = [
         {
             "tag": "markdown",
-            "content": f"**原文**\n{original_text}",
+            "content": f"### **原文**\n{original_text}",
         }
     ]
 
@@ -194,7 +194,7 @@ def _build_feishu_card(author, original_text, translated_text, link, image_key=N
         elements.append(
             {
                 "tag": "markdown",
-                "content": f"**翻译**\n{translated_text}",
+                "content": f"### **翻译**\n{translated_text}",
             }
         )
 
