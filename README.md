@@ -1,4 +1,4 @@
-# Twitter/X 多渠道自动翻译推送机器人
+# Twitter/X 自动翻译推送机器人
 
 这是一个基于 Python 的自动化机器人，能够监控指定 Twitter/X 用户的 RSSHub 订阅源，使用 Google Gemini 大模型将推文自动翻译成中文，并实时推送到 Telegram 和飞书应用机器人。
 
