@@ -29,7 +29,7 @@
 1.  **克隆项目**
     ```bash
     git clone https://github.com/Forensax/X2TG.git
-    cd rss-gemini-tg-bot
+    cd X2TG
     ```
 
 2.  **安装依赖**
