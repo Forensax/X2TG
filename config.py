@@ -37,6 +37,9 @@ RSS_URLS = [c["url"] for c in RSS_CONFIGS]
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL")
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
 TG_CHAT_ID = os.getenv("TG_CHAT_ID")
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "1800"))
@@ -96,8 +99,11 @@ ENABLED_CHANNELS = build_enabled_channels()
 # 简单校验
 if not RSS_CONFIGS:
     print("错误: 请在 .env 文件中配置 RSS_URL (格式: URL@T,URL@F)")
-if any(config["translate"] for config in RSS_CONFIGS) and not GEMINI_API_KEY:
-    print("错误: 检测到开启翻译的 RSS 源，但未配置 GEMINI_API_KEY")
+if any(config["translate"] for config in RSS_CONFIGS):
+    if AI_PROVIDER == "gemini" and not GEMINI_API_KEY:
+        print("错误: 检测到开启翻译的 RSS 源，由于使用 gemini 模型，但未配置 GEMINI_API_KEY")
+    elif AI_PROVIDER == "openai" and not OPENAI_API_KEY:
+        print("错误: 检测到开启翻译的 RSS 源，由于使用 openai 模型，但未配置 OPENAI_API_KEY")
 
 if not ENABLED_CHANNELS:
     print("错误: 没有可用的通知渠道，请检查 NOTIFY_CHANNELS 及对应配置")

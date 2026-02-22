@@ -5,3 +5,5 @@ python-dotenv
 schedule
 html2text
 beautifulsoup4
+openai
+
