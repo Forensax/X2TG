@@ -2,7 +2,7 @@ import time
 import schedule
 import signal
 import sys
-from config import CHECK_INTERVAL, RSS_CONFIGS, ENABLED_CHANNELS
+from config import CHECK_INTERVAL, RSS_CONFIGS, ENABLED_CHANNELS, AI_PROVIDER, PROXY_URL
 from rss_fetcher import fetch_new_tweets, save_last_link
 from translator import translate_tweet
 from notifier import send_telegram_message, send_plain_message
@@ -85,7 +85,30 @@ if __name__ == "__main__":
     
     # --- 启动通知流程 ---
     print("正在发送启动通知...")
-    send_plain_message("🤖 Twitter 监控机器人已启动")
+    
+    # 构建详细的启动消息
+    startup_msg_lines = [
+        "🤖 Twitter 监控机器人已启动\n",
+        f"⏱️ 启动时间: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+        f"🔄 检查间隔: {CHECK_INTERVAL} 秒",
+        f"🧠 翻译模型: {AI_PROVIDER.upper()}",
+        f"📢 通知渠道: {', '.join(ENABLED_CHANNELS) if ENABLED_CHANNELS else '无'}"
+    ]
+    if PROXY_URL:
+        startup_msg_lines.append(f"🌐 网络代理: 已配置")
+        
+    startup_msg_lines.append(f"\n📋 监控列表 ({len(RSS_CONFIGS)} 个):")
+    for i, config in enumerate(RSS_CONFIGS, 1):
+        url = config['url']
+        url_parts = [p for p in url.split('/') if p]
+        username = url
+        if len(url_parts) >= 2:
+            username = url_parts[-2] if url_parts[-1] == 'rss' else url_parts[-1]
+            
+        translate_status = "✅ 翻译" if config['translate'] else "❌ 不翻译"
+        startup_msg_lines.append(f"  {i}. {username} [{translate_status}]")
+        
+    send_plain_message("\n".join(startup_msg_lines))
 
     print("\n[启动检查] 获取所有关注用户的最新推文...")
     for config in RSS_CONFIGS:
