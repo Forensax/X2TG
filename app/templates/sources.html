@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}RSS 源 - X2TG{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>RSS 源</h1>
+    <p>新增源会先标记最新内容为已读，避免首次保存后推送历史消息。</p>
+  </div>
+  <div class="header-actions">
+    {% if adding %}
+    <a class="ghost-link" href="/sources">取消新增</a>
+    {% else %}
+    <a class="button" href="/sources?new=1">新增 RSS 源</a>
+    {% endif %}
+  </div>
+</header>
+
+<section class="panel">
+  <div class="section-title">
+    <h2>源列表</h2>
+    <span class="muted-text">{{ sources | length }} 个 RSS 源</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="sources-table">
+      <thead>
+        <tr><th>名称</th><th>状态</th><th>翻译</th><th>进度</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        {% if adding %}
+        <tr class="edit-row">
+          <td colspan="5">
+            <form method="post" action="/sources" class="inline-edit-form">
+              <input type="hidden" name="source_id" value="">
+              <label>
+                RSS URL
+                <input name="url" placeholder="https://rsshub.app/twitter/user/elonmusk" required>
+              </label>
+              <label>
+                显示名称
+                <input name="display_name" placeholder="elonmusk">
+              </label>
+              <label class="inline-check"><input type="checkbox" name="translate_enabled" value="1" checked> 启用翻译</label>
+              <label class="inline-check"><input type="checkbox" name="enabled" value="1" checked> 启用监控</label>
+              <div class="form-actions">
+                <button type="submit">保存新增</button>
+                <a class="ghost-link" href="/sources">取消</a>
+              </div>
+            </form>
+          </td>
+        </tr>
+        {% endif %}
+
+        {% for source in sources %}
+          {% if editing and editing.id == source.id %}
+          <tr class="edit-row">
+            <td colspan="5">
+              <form method="post" action="/sources" class="inline-edit-form">
+                <input type="hidden" name="source_id" value="{{ source.id }}">
+                <label>
+                  RSS URL
+                  <input name="url" value="{{ source.url }}" required>
+                </label>
+                <label>
+                  显示名称
+                  <input name="display_name" value="{{ source.display_name }}" placeholder="elonmusk">
+                </label>
+                <label class="inline-check"><input type="checkbox" name="translate_enabled" value="1" {{ 'checked' if source.translate_enabled else '' }}> 启用翻译</label>
+                <label class="inline-check"><input type="checkbox" name="enabled" value="1" {{ 'checked' if source.enabled else '' }}> 启用监控</label>
+                <div class="form-actions">
+                  <button type="submit">保存修改</button>
+                  <a class="ghost-link" href="/sources">取消</a>
+                </div>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td>
+              <strong>{{ source.display_name or source.url }}</strong>
+              <span class="muted">{{ source.url }}</span>
+            </td>
+            <td>
+              {% if source.enabled %}
+              <span class="state-pill success"><span class="state-icon">✓</span><span class="state-label">启用</span></span>
+              {% else %}
+              <span class="state-pill neutral"><span class="state-icon">停</span><span class="state-label">停用</span></span>
+              {% endif %}
+            </td>
+            <td>
+              {% if source.translate_enabled %}
+              <span class="state-pill info"><span class="state-icon">译</span><span class="state-label">翻译</span></span>
+              {% else %}
+              <span class="state-pill neutral"><span class="state-icon">原</span><span class="state-label">原文</span></span>
+              {% endif %}
+            </td>
+            <td>
+              {% if source.last_link %}
+              <span class="state-pill success wide"><span class="state-icon">✓</span><span class="state-label">已初始化</span></span>
+              {% else %}
+              <span class="state-pill warning wide"><span class="state-icon">!</span><span class="state-label">未初始化</span></span>
+              {% endif %}
+            </td>
+            <td class="actions-cell">
+              <div class="actions-inner">
+                <a class="small-link-button" href="/sources?edit={{ source.id }}">编辑</a>
+                <form method="post" action="/sources/{{ source.id }}/check"><button class="small" type="submit">检查</button></form>
+                <form method="post" action="/sources/{{ source.id }}/delete"><button class="small danger" type="submit">删除</button></form>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+
+        {% if not sources and not adding %}
+        <tr>
+          <td colspan="5"><p class="empty">尚未添加 RSS 源。</p></td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

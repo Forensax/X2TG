@@ -17,5 +17,7 @@ COPY . .
 # 创建数据目录
 RUN mkdir -p /app/data
 
+EXPOSE 8000
+
 # 默认命令
-CMD ["python", "main.py"]
+CMD ["uvicorn", "app.web:app", "--host", "0.0.0.0", "--port", "8000"]

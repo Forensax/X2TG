@@ -1,112 +1,138 @@
-# Twitter/X 自动翻译推送机器人
+# X2TG Web
 
-这是一个基于 Python 的自动化机器人，能够监控指定 Twitter/X 用户的 RSSHub 订阅源，使用 Google Gemini 大模型将推文自动翻译成中文，并实时推送到 Telegram 和飞书应用机器人。
+X2TG 是一个用于监控 Twitter/X RSSHub 订阅源、翻译推文并推送到 Telegram/飞书的私有 Web 管理项目。
 
-## ✨ 功能特性
+当前版本已经从 `.env` 驱动的单进程脚本改造成单体 Web 服务：
 
-*   **多账号监控**: 支持同时监控多个 Twitter 账号，只需在配置中用逗号分隔多个 RSS URL。
-*   **多渠道通知**: 支持 Telegram + 飞书应用机器人，支持在配置中选择一个或多个渠道。
-*   **翻译控制**: 支持为每个账号单独配置是否开启翻译。使用 `@T`（开启，默认）或 `@F`（关闭）后缀。
-    *   例如：`https://rsshub.app/twitter/user/elonmusk@T,https://rsshub.app/twitter/user/NASA@F`
-*   **AI 翻译**: 集成 Google Gemini Pro/Flash 模型，提供流畅、自然的中文翻译（默认为 `gemini-3-flash-preview`）。
-*   **智能重试**: 翻译失败自动重试机制（最多 3 次），并支持指数退避，确保服务稳定性。
-*   **格式保留**: 翻译过程中自动保留原文链接、Hashtag (#标签) 和用户提及 (@用户)。
-*   **智能去重**: 本地分别记录每个 RSS 源已处理的推文，避免重复推送（重启程序后依然有效）。
-*   **防封禁**: 内置请求间隔和错误重试机制，防止触发 API 速率限制。
-*   **代理支持**: 支持配置 HTTP/HTTPS 代理，方便国内网络环境使用。
-*   **自定义 Base URL**: 支持自定义 Gemini API 端点（`GEMINI_BASE_URL`），便于对接反向代理。
+- 在网页中配置 RSS 源、代理、大模型 API、Telegram、飞书。
+- 后台自动定时检查 RSS，也支持手动检查。
+- SQLite 持久化配置、RSS 进度、成功发送历史和运行日志。
+- 单管理员密码登录保护管理页面。
+- 首次启动会兼容导入旧 `.env` 和 `state.json`，不会删除原文件。
 
-## 🛠️ 前置要求
+## 功能
 
-*   Python 3.13
-*   [Google Gemini API Key](https://aistudio.google.com/)
-*   [Telegram Bot Token](https://t.me/BotFather)（如启用 Telegram）
-*   [飞书自建应用](https://open.feishu.cn/)（如启用飞书应用机器人）
-*   有效的 RSSHub 订阅链接 (例如: `https://rsshub.app/twitter/user/elonmusk`)
+- 多 RSS 源监控，每个源可单独启停和控制是否翻译。
+- 支持 Gemini / OpenAI，并可配置模型名、API Key、Base URL。
+- 支持 HTTP/HTTPS 代理。
+- 支持 Telegram 和飞书应用机器人通知渠道。
+- 历史页面只展示至少一个渠道发送成功的消息。
+- 运维页面支持暂停/恢复后台监控、立即检查全部、单源检查、查看日志。
+- 新增 RSS 源默认只标记最新内容为已读，避免首次配置时刷屏。
 
-## 🚀 安装步骤
+## 本地运行
 
-1.  **克隆项目**
-    ```bash
-    git clone https://github.com/Forensax/X2TG.git
-    cd X2TG
-    ```
+安装依赖：
 
-2.  **安装依赖**
-    ```bash
-    pip install -r requirements.txt
-    ```
+```bash
+pip install -r requirements.txt
+```
 
-3.  **配置环境变量**
-    复制配置文件模板并重命名为 `.env`：
-    ```bash
-    cp .env.example .env
-    ```
-    
-    使用文本编辑器打开 `.env` 文件并填入以下信息：
-    ```ini
-    # RSSHub 订阅地址 (支持多个，用逗号分隔)
-    # 格式: URL@T (翻译) 或 URL@F (不翻译)
-    RSS_URL=https://rsshub.app/twitter/user/elonmusk@T,https://rsshub.app/twitter/user/NASA@F
-    
-    # Google Gemini API Key
-    GEMINI_API_KEY=your_gemini_api_key_here
-
-    # (可选) 自定义 Gemini API Base URL (例如使用反向代理时)
-    # GEMINI_BASE_URL=https://generativelanguage.googleapis.com
-    
-    # Telegram Bot Token
-    TG_BOT_TOKEN=your_telegram_bot_token
-    
-    # 接收消息的 Chat ID (用户 ID 或 频道 ID)
-    TG_CHAT_ID=your_chat_id
-
-    # 通知渠道，支持多个，逗号分隔
-    # 可选: telegram,feishu
-    NOTIFY_CHANNELS=telegram,feishu
-
-    # 飞书应用机器人配置
-    # 如何获取用户的 Open ID https://open.feishu.cn/document/faq/trouble-shooting/how-to-obtain-openid
-    FEISHU_APP_ID=cli_xxx
-    FEISHU_APP_SECRET=your_feishu_app_secret
-    FEISHU_RECEIVE_ID_TYPE=chat_id
-    FEISHU_RECEIVE_IDS=oc_xxx,oc_yyy
-    
-    # 检查间隔 (秒)，默认 30 分钟
-    CHECK_INTERVAL=1800
-    
-    # (可选) 代理设置
-    # PROXY_URL=http://127.0.0.1:7890
-    ```
-
-## 🏃‍♂️ 运行
-
-在配置完成后，直接运行主程序：
+启动 Web 服务：
 
 ```bash
 python main.py
 ```
 
-程序启动后：
-1.  **首次运行**：会自动标记所有配置账号的最新一条推文为"已读"，**不会**推送历史消息（防止刷屏）。
-2.  之后每隔 `CHECK_INTERVAL` 秒检查一次新推文。
-3.  发现新推文后，会自动翻译并推送到已启用渠道（Telegram/飞书）。
+或：
 
-## 📂 项目结构
+```bash
+uvicorn app.web:app --host 0.0.0.0 --port 8000 --reload
+```
 
-*   `main.py`: 程序入口，负责多任务调度和主循环。
-*   `config.py`: 配置加载模块，支持解析多 RSS URL 及翻译标记。
-*   `rss_fetcher.py`: 负责从 RSSHub 获取并解析数据，独立管理每个源的状态。
-*   `translator.py`: 调用 Google Gemini API 进行翻译，包含重试逻辑。
-*   `notifier.py`: 调用 Telegram Bot API 和飞书消息 API 发送消息。
-*   `state.json`: (自动生成) 存储每个 RSS 源最后处理的推文链接。
+浏览器打开：
 
-## ⚠️ 注意事项
+```text
+http://localhost:8000
+```
 
-*   **RSSHub 稳定性**: 公共的 RSSHub 实例（如 rsshub.app）可能会因为反爬虫限制而无法获取 Twitter 内容。建议自建 RSSHub 或使用其他可靠的 RSS 源。
-*   **Gemini 配额**: 请留意 Google Gemini API 的免费额度限制（通常每分钟请求次数有限制），默认的 30 分钟检查间隔通常是安全的。
-*   **网络问题**: 如果在中国大陆使用，请务必配置 `.env` 中的 `PROXY_URL`。
+首次访问会进入管理员初始化页面。也可以在首次启动前设置：
 
-## 📝 License
+```bash
+ADMIN_INIT_PASSWORD=change-me-now
+```
 
-MIT License
+默认数据库位置：
+
+```text
+data/x2tg.db
+```
+
+## Docker 运行
+
+```bash
+docker compose up -d --build
+```
+
+访问：
+
+```text
+http://localhost:8000
+```
+
+`docker-compose.yml` 默认挂载：
+
+```text
+./data:/app/data
+```
+
+如需首次导入旧 `.env`，可以临时取消 compose 中的 `.env` 挂载注释。导入完成后建议移除该挂载，改用网页配置。
+
+## 旧配置迁移
+
+启动时如果检测到项目根目录存在 `.env`，会导入这些字段：
+
+- `RSS_URL`
+- `AI_PROVIDER`
+- `GEMINI_API_KEY`
+- `GEMINI_BASE_URL`
+- `OPENAI_API_KEY`
+- `OPENAI_BASE_URL`
+- `TG_BOT_TOKEN`
+- `TG_CHAT_ID`
+- `NOTIFY_CHANNELS`
+- `FEISHU_APP_ID`
+- `FEISHU_APP_SECRET`
+- `FEISHU_RECEIVE_ID_TYPE`
+- `FEISHU_RECEIVE_IDS`
+- `FEISHU_API_BASE`
+- `CHECK_INTERVAL`
+- `PROXY_URL`
+
+如果检测到旧 `state.json`，会把每个 RSS URL 的最后处理链接合并到 SQLite。
+
+迁移不会删除 `.env` 或 `state.json`。
+
+## 现在 `.env` 还可以放什么
+
+日常配置建议都在网页中完成。`.env` 只建议保留启动级配置：
+
+```ini
+DATABASE_URL=sqlite:///data/x2tg.db
+ADMIN_INIT_PASSWORD=change-me-now
+SECRET_KEY=replace-with-a-long-random-string
+TZ=Asia/Shanghai
+```
+
+`ADMIN_INIT_PASSWORD` 只用于第一次创建管理员。管理员创建后建议删除。
+
+## 项目结构
+
+- `app/web.py`：FastAPI 路由、表单页面、应用启动入口。
+- `app/db.py`：SQLite schema、迁移、配置和历史数据访问。
+- `app/monitor.py`：后台定时检查、手动检查、暂停/恢复。
+- `app/auth.py`：单管理员密码和签名 Cookie 登录。
+- `app/templates/`：Jinja2 页面模板。
+- `app/static/`：管理界面样式。
+- `rss_fetcher.py`：RSS 获取与解析。
+- `translator.py`：Gemini/OpenAI 翻译。
+- `notifier.py`：Telegram/飞书发送。
+- `main.py`：兼容入口，启动 Web 服务。
+
+## 注意事项
+
+- 公共 RSSHub 实例可能不稳定，建议使用自建或稳定 RSSHub。
+- Telegram、Gemini、OpenAI 在中国大陆网络环境下通常需要代理。
+- 当前登录保护按私有自用设计；公网部署建议放在 HTTPS 反向代理后面，并设置稳定的 `SECRET_KEY`。
+- 成功发送至少一个通知渠道后才会推进 RSS 进度；全部渠道失败会保留进度，便于下次重试。
+

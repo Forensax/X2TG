@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}X2TG Web{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css?v=20260608-3">
+</head>
+<body>
+  <div class="app-shell">
+    {% if has_admin and path not in ['/login', '/setup'] %}
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">X</div>
+        <div>
+          <strong>X2TG</strong>
+          <span>Web Console</span>
+        </div>
+      </div>
+      <nav>
+        <a href="/" class="{{ 'active' if path == '/' else '' }}">仪表盘</a>
+        <a href="/settings" class="{{ 'active' if path == '/settings' else '' }}">系统设置</a>
+        <a href="/sources" class="{{ 'active' if path == '/sources' else '' }}">RSS 源</a>
+        <a href="/channels" class="{{ 'active' if path == '/channels' else '' }}">通知渠道</a>
+        <a href="/messages" class="{{ 'active' if path == '/messages' else '' }}">发送历史</a>
+        <a href="/ops" class="{{ 'active' if path == '/ops' else '' }}">运维控制</a>
+      </nav>
+      <form action="/logout" method="post">
+        <button class="ghost-button full" type="submit">退出登录</button>
+      </form>
+    </aside>
+    {% endif %}
+    <main class="main">
+      {% if flash %}
+      <div class="alert success">{{ flash }}</div>
+      {% endif %}
+      {% if error %}
+      <div class="alert error">{{ error }}</div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

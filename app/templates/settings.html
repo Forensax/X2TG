@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}系统设置 - X2TG{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>系统设置</h1>
+    <p>代理、大模型 API 和检查间隔会在保存后被后台任务重新加载。</p>
+  </div>
+</header>
+
+<form method="post" action="/settings" class="panel form-grid">
+  <label>
+    检查间隔（秒）
+    <input name="check_interval" type="number" min="10" value="{{ settings.check_interval }}" required>
+  </label>
+  <label>
+    代理 URL
+    <input name="proxy_url" value="{{ settings.proxy_url }}" placeholder="http://127.0.0.1:7890">
+  </label>
+  <label>
+    AI Provider
+    <select name="ai_provider">
+      <option value="gemini" {{ 'selected' if settings.ai_provider == 'gemini' else '' }}>Gemini</option>
+      <option value="openai" {{ 'selected' if settings.ai_provider == 'openai' else '' }}>OpenAI</option>
+    </select>
+  </label>
+  <label>
+    模型名
+    <input name="ai_model" value="{{ settings.ai_model }}" placeholder="gemini-3-flash-preview">
+  </label>
+  <label>
+    Gemini API Key
+    <input name="gemini_api_key" type="password" value="{{ secret_placeholder if settings.gemini_api_key else '' }}" autocomplete="new-password">
+  </label>
+  <label>
+    Gemini Base URL
+    <input name="gemini_base_url" value="{{ settings.gemini_base_url }}" placeholder="https://generativelanguage.googleapis.com">
+  </label>
+  <label>
+    OpenAI API Key
+    <input name="openai_api_key" type="password" value="{{ secret_placeholder if settings.openai_api_key else '' }}" autocomplete="new-password">
+  </label>
+  <label>
+    OpenAI Base URL
+    <input name="openai_base_url" value="{{ settings.openai_base_url }}" placeholder="https://api.openai.com/v1">
+  </label>
+  <div class="form-actions">
+    <button type="submit">保存设置</button>
+  </div>
+</form>
+{% endblock %}
+

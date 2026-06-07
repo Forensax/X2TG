@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}运维控制 - X2TG{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>运维控制</h1>
+    <p>当前状态：<span class="status {{ monitor.status }}">{{ monitor.status }}</span></p>
+  </div>
+  <div class="header-actions">
+    <form method="post" action="/ops/check"><button type="submit">立即检查全部</button></form>
+    {% if monitor.paused %}
+    <form method="post" action="/ops/resume"><button type="submit">恢复监控</button></form>
+    {% else %}
+    <form method="post" action="/ops/pause"><button type="submit" class="secondary">暂停监控</button></form>
+    {% endif %}
+  </div>
+</header>
+
+<section class="two-column">
+  <div class="panel">
+    <h2>单源检查</h2>
+    {% if sources %}
+    <div class="source-actions">
+      {% for source in sources %}
+      <form method="post" action="/sources/{{ source.id }}/check">
+        <span>{{ source.display_name or source.url }}</span>
+        <button class="small" type="submit">检查</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">尚未配置 RSS 源。</p>
+    {% endif %}
+  </div>
+  <div class="panel">
+    <h2>状态</h2>
+    <dl class="detail-list">
+      <dt>下次检查</dt><dd>{{ monitor.next_run_at or '等待调度' }}</dd>
+      <dt>上次检查</dt><dd>{{ monitor.last_run_at or '尚未执行' }}</dd>
+      <dt>最近错误</dt><dd>{{ monitor.last_error or '无' }}</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="section-title">
+    <h2>运行日志</h2>
+    <form method="get" action="/ops" class="inline-form">
+      <select name="level">
+        <option value="">全部</option>
+        {% for level in ['info','warning','error'] %}
+        <option value="{{ level }}" {{ 'selected' if selected_level == level else '' }}>{{ level }}</option>
+        {% endfor %}
+      </select>
+      <button class="small" type="submit">筛选</button>
+    </form>
+  </div>
+  {% if events %}
+  <div class="event-list">
+    {% for event in events %}
+    <article class="event {{ event.level }}">
+      <strong>{{ event.level }} · {{ event.event_type }}</strong>
+      <span>{{ event.created_at }}</span>
+      <p>{{ event.message }}</p>
+      {% if event.details %}
+      <code>{{ event.details }}</code>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">暂无日志。</p>
+  {% endif %}
+</section>
+{% endblock %}
+

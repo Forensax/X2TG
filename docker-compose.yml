@@ -1,12 +1,16 @@
-version: '3'
 services:
-  rss-bot:
+  x2tg-web:
     build: .
     restart: unless-stopped
+    ports:
+      - "8000:8000"
     volumes:
-      - ./.env:/app/.env
-      # - ./data:/app/data
+      - ./data:/app/data
+      # 可选：首次迁移旧配置时挂载 .env；迁移后可移除
+      # - ./.env:/app/.env:ro
     environment:
-      - PYTHONUNBUFFERED=1 # 强制 Python 实时输出日志
-      - STATE_FILE=/app/data/state.json
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=sqlite:///data/x2tg.db
       - TZ=Asia/Shanghai
+      # 可选：首次启动自动创建管理员，之后建议删除
+      # - ADMIN_INIT_PASSWORD=change-me-now

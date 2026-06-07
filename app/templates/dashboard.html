@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 - X2TG{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>仪表盘</h1>
+    <p>后台状态：<span class="status {{ monitor.status }}">{{ monitor.status }}</span></p>
+  </div>
+  <div class="header-actions">
+    <form method="post" action="/ops/check"><button type="submit">立即检查</button></form>
+    {% if monitor.paused %}
+    <form method="post" action="/ops/resume"><button type="submit">恢复监控</button></form>
+    {% else %}
+    <form method="post" action="/ops/pause"><button type="submit" class="secondary">暂停监控</button></form>
+    {% endif %}
+  </div>
+</header>
+
+<section class="metric-grid">
+  <div class="metric"><span>启用 RSS</span><strong>{{ counts.enabled_sources }}</strong></div>
+  <div class="metric"><span>全部 RSS</span><strong>{{ counts.sources }}</strong></div>
+  <div class="metric"><span>成功历史</span><strong>{{ counts.sent_messages }}</strong></div>
+  <div class="metric"><span>错误事件</span><strong>{{ counts.errors }}</strong></div>
+</section>
+
+<section class="two-column">
+  <div class="panel">
+    <h2>运行信息</h2>
+    <dl class="detail-list">
+      <dt>检查间隔</dt><dd>{{ settings.check_interval }} 秒</dd>
+      <dt>下次检查</dt><dd>{{ monitor.next_run_at or '等待调度' }}</dd>
+      <dt>上次检查</dt><dd>{{ monitor.last_run_at or '尚未执行' }}</dd>
+      <dt>AI 模型</dt><dd>{{ settings.ai_provider }} / {{ settings.ai_model }}</dd>
+      <dt>通知渠道</dt><dd>{{ notifications.enabled_channels | join(', ') if notifications.enabled_channels else '无' }}</dd>
+      <dt>代理</dt><dd>{{ '已配置' if settings.proxy_url else '未配置' }}</dd>
+    </dl>
+  </div>
+  <div class="panel">
+    <h2>最近错误</h2>
+    {% if recent_errors %}
+    <div class="event-list">
+      {% for event in recent_errors %}
+      <article class="event error">
+        <strong>{{ event.event_type }}</strong>
+        <span>{{ event.created_at }}</span>
+        <p>{{ event.message }}</p>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">暂无错误。</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>最近成功发送</h2>
+  {% if recent_messages %}
+  <div class="message-list compact">
+    {% for message in recent_messages %}
+    <article class="message-item">
+      <div>
+        <strong>{{ message.author }}</strong>
+        <span>{{ message.sent_at }} · {{ message.successful_channels | join(', ') }}</span>
+      </div>
+      <p>{{ message.original_text }}</p>
+      <a href="{{ message.link }}" target="_blank" rel="noreferrer">查看原文</a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">还没有成功发送的消息。</p>
+  {% endif %}
+</section>
+{% endblock %}
+

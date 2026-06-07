@@ -2,8 +2,14 @@ feedparser
 google-genai
 requests
 python-dotenv
-schedule
 html2text
 beautifulsoup4
 openai
+fastapi
+uvicorn
+jinja2
+python-multipart
+passlib[bcrypt]
+bcrypt<4
+itsdangerous
 

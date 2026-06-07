@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}初始化管理员 - X2TG{% endblock %}
+{% block content %}
+<section class="auth-panel">
+  <h1>初始化管理员</h1>
+  <form method="post" action="/setup" class="form-stack">
+    <label>
+      用户名
+      <input name="username" value="admin" autocomplete="username" required>
+    </label>
+    <label>
+      密码
+      <input name="password" type="password" autocomplete="new-password" minlength="8" required>
+    </label>
+    <label>
+      确认密码
+      <input name="password_confirm" type="password" autocomplete="new-password" minlength="8" required>
+    </label>
+    <button type="submit">创建管理员</button>
+  </form>
+</section>
+{% endblock %}
+

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}登录 - X2TG{% endblock %}
+{% block content %}
+<section class="auth-panel">
+  <h1>X2TG 管理登录</h1>
+  <form method="post" action="/login" class="form-stack">
+    <label>
+      用户名
+      <input name="username" autocomplete="username" required>
+    </label>
+    <label>
+      密码
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">登录</button>
+  </form>
+</section>
+{% endblock %}

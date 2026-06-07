@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}发送历史 - X2TG{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>发送历史</h1>
+    <p>这里只展示至少一个通知渠道发送成功的消息。</p>
+  </div>
+</header>
+
+<form method="get" action="/messages" class="panel filter-grid">
+  <label>
+    RSS 源
+    <select name="source_id">
+      <option value="">全部</option>
+      {% for source in sources %}
+      <option value="{{ source.id }}" {{ 'selected' if filters.source_id == source.id|string else '' }}>{{ source.display_name or source.url }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    作者
+    <input name="author" value="{{ filters.author }}">
+  </label>
+  <label>
+    渠道
+    <select name="channel">
+      <option value="">全部</option>
+      <option value="telegram" {{ 'selected' if filters.channel == 'telegram' else '' }}>Telegram</option>
+      <option value="feishu" {{ 'selected' if filters.channel == 'feishu' else '' }}>飞书</option>
+    </select>
+  </label>
+  <label>
+    关键词
+    <input name="keyword" value="{{ filters.keyword }}">
+  </label>
+  <label>
+    开始时间
+    <input name="start" value="{{ filters.start }}" placeholder="2026-06-08">
+  </label>
+  <label>
+    结束时间
+    <input name="end" value="{{ filters.end }}" placeholder="2026-06-09">
+  </label>
+  <div class="form-actions">
+    <button type="submit">筛选</button>
+    <a class="ghost-link" href="/messages">清空</a>
+  </div>
+</form>
+
+<section class="message-list">
+  {% if messages %}
+    {% for message in messages %}
+    <article class="message-item">
+      <header>
+        <div>
+          <strong>{{ message.author }}</strong>
+          <span>{{ message.source_name }}</span>
+        </div>
+        <time>{{ message.sent_at }}</time>
+      </header>
+      <div class="channel-row">
+        {% for channel in message.successful_channels %}
+        <span class="tag">{{ channel }}</span>
+        {% endfor %}
+      </div>
+      <h3>原文</h3>
+      <p>{{ message.original_text }}</p>
+      {% if message.translated_text %}
+      <h3>翻译</h3>
+      <p>{{ message.translated_text }}</p>
+      {% endif %}
+      {% if message.images %}
+      <div class="image-row">
+        {% for image in message.images[:3] %}
+        <a href="{{ image }}" target="_blank" rel="noreferrer">图片 {{ loop.index }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <a href="{{ message.link }}" target="_blank" rel="noreferrer">查看原文</a>
+    </article>
+    {% endfor %}
+  {% else %}
+  <p class="empty">没有匹配的成功发送消息。</p>
+  {% endif %}
+</section>
+{% endblock %}
+

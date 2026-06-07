@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}通知渠道 - X2TG{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>通知渠道</h1>
+    <p>密钥字段留空会保留原值，输入新值才会覆盖。</p>
+  </div>
+</header>
+
+<form method="post" action="/channels" class="form-stack">
+  <section class="panel">
+    <div class="section-title">
+      <h2>Telegram</h2>
+      <div class="section-actions">
+        <label><input type="checkbox" name="telegram_enabled" value="1" {{ 'checked' if notifications.telegram.enabled else '' }}> 启用</label>
+        <button type="submit" class="secondary small" form="test-telegram">测试 Telegram</button>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label>
+        Bot Token
+        <input name="tg_bot_token" type="password" value="{{ secret_placeholder if notifications.telegram.bot_token else '' }}" autocomplete="new-password">
+      </label>
+      <label>
+        Chat ID
+        <input name="tg_chat_id" value="{{ notifications.telegram.chat_id }}">
+      </label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="section-title">
+      <h2>飞书</h2>
+      <div class="section-actions">
+        <label><input type="checkbox" name="feishu_enabled" value="1" {{ 'checked' if notifications.feishu.enabled else '' }}> 启用</label>
+        <button type="submit" class="secondary small" form="test-feishu">测试飞书</button>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label>
+        App ID
+        <input name="feishu_app_id" value="{{ notifications.feishu.app_id }}">
+      </label>
+      <label>
+        App Secret
+        <input name="feishu_app_secret" type="password" value="{{ secret_placeholder if notifications.feishu.app_secret else '' }}" autocomplete="new-password">
+      </label>
+      <label>
+        Receive ID Type
+        <select name="feishu_receive_id_type">
+          {% for item in ['chat_id','open_id','union_id','user_id','email'] %}
+          <option value="{{ item }}" {{ 'selected' if notifications.feishu.receive_id_type == item else '' }}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Receive IDs
+        <input name="feishu_receive_ids" value="{{ notifications.feishu.receive_ids | join(',') }}" placeholder="oc_xxx,oc_yyy">
+      </label>
+      <label>
+        API Base
+        <input name="feishu_api_base" value="{{ notifications.feishu.api_base }}">
+      </label>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button type="submit">保存通知渠道</button>
+  </div>
+</form>
+
+<form id="test-telegram" method="post" action="/channels/test/telegram"></form>
+<form id="test-feishu" method="post" action="/channels/test/feishu"></form>
+{% endblock %}
