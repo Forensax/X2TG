@@ -86,7 +86,7 @@ def translate_tweet(content):
                 
             elif AI_PROVIDER == "openai" and local_openai_client:
                 response = local_openai_client.responses.create(
-                    model="gpt-5.2",
+                    model="gpt-5.5",
                     reasoning={"effort": "medium"},
                     input=[
                         {
