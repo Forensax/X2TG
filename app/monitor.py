@@ -185,7 +185,57 @@ class Monitor:
             self.last_error = str(exc)
             self.repo.add_event("error", "rss", f"RSS 源处理失败: {source.url}", {"error": str(exc)})
 
-    async def _process_tweet(self, source: RssSource, tweet: dict, settings, notifications) -> None:
+    async def send_latest_source(self, source_id: int) -> bool:
+        async with self._lock:
+            self.checking = True
+            try:
+                source = self.repo.get_source(source_id)
+                if not source:
+                    self.repo.add_event("error", "send_latest", f"RSS 源不存在: {source_id}")
+                    return False
+
+                config = self.repo.get_runtime_config()
+                tweets = await asyncio.to_thread(
+                    fetch_new_tweets,
+                    source.url,
+                    "",
+                    config.settings.proxy_url,
+                    True,
+                )
+                if not tweets:
+                    self.repo.add_event("warning", "send_latest", f"未获取到最新推文: {source.url}")
+                    return False
+
+                tweet = tweets[-1]
+                sent = await self._process_tweet(
+                    source,
+                    tweet,
+                    config.settings,
+                    config.notifications,
+                    event_type="send_latest",
+                )
+                self.last_run_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                return sent
+            except Exception as exc:
+                self.last_error = str(exc)
+                self.repo.add_event(
+                    "error",
+                    "send_latest",
+                    f"发送最新推文失败: {exc}",
+                    {"source_id": source_id},
+                )
+                return False
+            finally:
+                self.checking = False
+
+    async def _process_tweet(
+        self,
+        source: RssSource,
+        tweet: dict,
+        settings,
+        notifications,
+        event_type: str = "send",
+    ) -> bool:
         translated_text = ""
         if source.translate_enabled:
             result = await asyncio.to_thread(translate_tweet, tweet.get("content", ""), settings)
@@ -214,17 +264,19 @@ class Monitor:
             self.repo.update_source_last_link(source.id, tweet.get("link", ""))
             self.repo.add_event(
                 "info",
-                "send",
+                event_type,
                 f"消息发送成功: {tweet.get('link', '')}",
                 {"channels": channels},
             )
+            return True
         else:
             self.repo.add_event(
                 "error",
-                "send",
+                event_type,
                 f"所有通知渠道发送失败，不推进 RSS 进度: {tweet.get('link', '')}",
                 {"results": [result.__dict__ for result in results]},
             )
+            return False
 
     async def send_startup_message(self) -> None:
         config = self.repo.get_runtime_config()

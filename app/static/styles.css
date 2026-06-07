@@ -458,7 +458,7 @@ td .muted {
 }
 
 .actions-cell {
-  min-width: 170px;
+  min-width: 224px;
   white-space: nowrap;
 }
 
@@ -472,7 +472,7 @@ td .muted {
 
 .sources-table th:last-child,
 .sources-table td:last-child {
-  width: 210px;
+  width: 252px;
 }
 
 .source-actions {

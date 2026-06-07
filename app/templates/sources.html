@@ -105,6 +105,7 @@
               <div class="actions-inner">
                 <a class="small-link-button" href="/sources?edit={{ source.id }}">编辑</a>
                 <form method="post" action="/sources/{{ source.id }}/check"><button class="small" type="submit">检查</button></form>
+                <form method="post" action="/sources/{{ source.id }}/send-latest"><button class="small secondary" type="submit">发送</button></form>
                 <form method="post" action="/sources/{{ source.id }}/delete"><button class="small danger" type="submit">删除</button></form>
               </div>
             </td>

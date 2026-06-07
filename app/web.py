@@ -269,6 +269,17 @@ async def check_source(request: Request, source_id: int):
     return RedirectResponse("/ops?flash=单个 RSS 源检查完成", status_code=303)
 
 
+@app.post("/sources/{source_id}/send-latest")
+async def send_latest_source(request: Request, source_id: int):
+    redirect = require_auth(request)
+    if redirect:
+        return redirect
+    sent = await monitor.send_latest_source(source_id)
+    if sent:
+        return RedirectResponse("/sources?flash=最新一条推文已发送", status_code=303)
+    return RedirectResponse("/sources?error=最新一条推文发送失败，请查看运维日志", status_code=303)
+
+
 @app.get("/channels", response_class=HTMLResponse)
 async def channels_page(request: Request):
     return render(request, "channels.html", notifications=repo.get_notifications())
