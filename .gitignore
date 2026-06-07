@@ -5,6 +5,8 @@ __pycache__/
 venv/
 .venv/
 state.json
+data/
+*.db
 .DS_Store
 .idea/
 .vscode/
