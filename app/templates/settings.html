@@ -14,8 +14,14 @@
     <input name="check_interval" type="number" min="10" value="{{ settings.check_interval }}" required>
   </label>
   <label>
-    代理 URL
-    <input name="proxy_url" value="{{ settings.proxy_url }}" placeholder="http://127.0.0.1:7890">
+    <span class="label-row">
+      <span>代理 URL</span>
+      <span id="proxy-test-result" class="field-hint"></span>
+    </span>
+    <div class="input-action-row">
+      <input id="proxy-url-input" name="proxy_url" value="{{ settings.proxy_url }}" placeholder="http://127.0.0.1:7890">
+      <button id="test-proxy-button" type="button" class="secondary">测试代理</button>
+    </div>
   </label>
   <label>
     AI Provider
@@ -28,19 +34,19 @@
     模型名
     <input name="ai_model" value="{{ settings.ai_model }}" placeholder="gemini-3-flash-preview">
   </label>
-  <label>
+  <label data-provider-field="gemini">
     Gemini API Key
     <input name="gemini_api_key" type="password" value="{{ secret_placeholder if settings.gemini_api_key else '' }}" autocomplete="new-password">
   </label>
-  <label>
+  <label data-provider-field="gemini">
     Gemini Base URL
     <input name="gemini_base_url" value="{{ settings.gemini_base_url }}" placeholder="https://generativelanguage.googleapis.com">
   </label>
-  <label>
+  <label data-provider-field="openai">
     OpenAI API Key
     <input name="openai_api_key" type="password" value="{{ secret_placeholder if settings.openai_api_key else '' }}" autocomplete="new-password">
   </label>
-  <label>
+  <label data-provider-field="openai">
     OpenAI Base URL
     <input name="openai_base_url" value="{{ settings.openai_base_url }}" placeholder="https://api.openai.com/v1">
   </label>
@@ -48,5 +54,43 @@
     <button type="submit">保存设置</button>
   </div>
 </form>
+<script>
+  const proxyButton = document.getElementById("test-proxy-button");
+  const proxyInput = document.getElementById("proxy-url-input");
+  const proxyResult = document.getElementById("proxy-test-result");
+  const providerSelect = document.querySelector('select[name="ai_provider"]');
+  const providerFields = document.querySelectorAll("[data-provider-field]");
+
+  const updateProviderFields = () => {
+    const selectedProvider = providerSelect?.value || "gemini";
+    providerFields.forEach((field) => {
+      field.hidden = field.dataset.providerField !== selectedProvider;
+    });
+  };
+
+  providerSelect?.addEventListener("change", updateProviderFields);
+  updateProviderFields();
+
+  proxyButton?.addEventListener("click", async () => {
+    proxyButton.disabled = true;
+    proxyResult.className = "field-hint";
+    proxyResult.textContent = "正在测试...";
+    try {
+      const response = await fetch("/api/test-proxy", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({proxy_url: proxyInput.value.trim()}),
+      });
+      const data = await response.json();
+      proxyResult.textContent = data.message || "测试完成";
+      proxyResult.className = `field-hint ${data.ok ? "success" : "error"}`;
+    } catch (error) {
+      proxyResult.textContent = `测试失败：${error}`;
+      proxyResult.className = "field-hint error";
+    } finally {
+      proxyButton.disabled = false;
+    }
+  });
+</script>
 {% endblock %}
 

@@ -1,7 +1,9 @@
 import os
+import time
 from pathlib import Path
 from typing import Optional
 
+import requests
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -81,6 +83,12 @@ def context(request: Request, **extra):
 
 def valid_password_length(password: str) -> bool:
     return len(password.encode("utf-8")) <= 72
+
+
+def proxy_dict(proxy_url: str) -> Optional[dict]:
+    if not proxy_url:
+        return None
+    return {"http": proxy_url, "https": proxy_url}
 
 
 def render(request: Request, template: str, **extra):
@@ -444,6 +452,52 @@ async def api_status(request: Request):
         "monitor": monitor.snapshot().__dict__,
         "counts": repo.counts(),
     }
+
+
+@app.post("/api/test-proxy")
+async def api_test_proxy(request: Request):
+    redirect = require_auth(request)
+    if redirect:
+        return JSONResponse({"ok": False, "message": "未登录"}, status_code=401)
+
+    payload = await request.json()
+    proxy_url = str(payload.get("proxy_url", "")).strip()
+    notifications = repo.get_notifications()
+    token = notifications.telegram.bot_token
+    if not token:
+        return JSONResponse(
+            {
+                "ok": False,
+                "message": "请先在通知渠道中配置 Telegram Bot Token。",
+            },
+            status_code=400,
+        )
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    started = time.perf_counter()
+    try:
+        response = requests.get(
+            url,
+            timeout=12,
+            proxies=proxy_dict(proxy_url),
+        )
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        return {
+            "ok": True,
+            "latency_ms": latency_ms,
+            "status_code": response.status_code,
+            "message": f"代理测试完成，延迟 {latency_ms} ms，HTTP {response.status_code}。",
+        }
+    except Exception as exc:
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        return JSONResponse(
+            {
+                "ok": False,
+                "latency_ms": latency_ms,
+                "message": f"代理测试失败，耗时 {latency_ms} ms：{exc}",
+            },
+            status_code=200,
+        )
 
 
 def main() -> None:

@@ -280,6 +280,18 @@ label {
   gap: 6px;
 }
 
+label[hidden] {
+  display: none;
+}
+
+.label-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
 input,
 select,
 textarea {
@@ -298,6 +310,33 @@ select:focus,
 textarea:focus {
   border-color: var(--primary);
   outline: 2px solid rgba(37, 99, 235, 0.16);
+}
+
+.input-action-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.input-action-row button {
+  white-space: nowrap;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  min-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.field-hint.success {
+  color: var(--success);
+}
+
+.field-hint.error {
+  color: var(--error);
 }
 
 .check-row,
