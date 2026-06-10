@@ -3,7 +3,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "38888:8000"
     volumes:
       - ./data:/app/data
       # 可选：首次迁移旧配置时挂载 .env；迁移后可移除
