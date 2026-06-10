@@ -30,7 +30,7 @@
       <dt>检查间隔</dt><dd>{{ settings.check_interval }} 秒</dd>
       <dt>下次检查</dt><dd>{{ monitor.next_run_at or '等待调度' }}</dd>
       <dt>上次检查</dt><dd>{{ monitor.last_run_at or '尚未执行' }}</dd>
-      <dt>AI 模型</dt><dd>{{ settings.ai_provider }} / {{ settings.ai_model }}</dd>
+      <dt>AI 接口</dt><dd>OpenAI 兼容 / {{ settings.ai_model }}</dd>
       <dt>通知渠道</dt><dd>{{ notifications.enabled_channels | join(', ') if notifications.enabled_channels else '无' }}</dd>
       <dt>代理</dt><dd>{{ '已配置' if settings.proxy_url else '未配置' }}</dd>
     </dl>

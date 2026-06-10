@@ -8,6 +8,7 @@ from typing import Any, Iterable, Optional
 
 from config import (
     DEFAULT_FEISHU_API_BASE,
+    DEFAULT_OPENAI_COMPAT_MODEL,
     AppSettings,
     FeishuConfig,
     NotificationConfig,
@@ -57,8 +58,8 @@ class Repository:
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 check_interval INTEGER NOT NULL DEFAULT 1800,
                 proxy_url TEXT NOT NULL DEFAULT '',
-                ai_provider TEXT NOT NULL DEFAULT 'gemini',
-                ai_model TEXT NOT NULL DEFAULT 'gemini-3-flash-preview',
+                ai_provider TEXT NOT NULL DEFAULT 'openai',
+                ai_model TEXT NOT NULL DEFAULT 'gpt-4o-mini',
                 gemini_api_key TEXT NOT NULL DEFAULT '',
                 gemini_base_url TEXT NOT NULL DEFAULT '',
                 openai_api_key TEXT NOT NULL DEFAULT '',
@@ -134,7 +135,7 @@ class Repository:
                 id, check_interval, proxy_url, ai_provider, ai_model,
                 gemini_api_key, gemini_base_url, openai_api_key, openai_base_url,
                 updated_at
-            ) VALUES (1, 1800, '', 'gemini', 'gemini-3-flash-preview', '', '', '', '', ?)
+            ) VALUES (1, 1800, '', 'openai', 'gpt-4o-mini', '', '', '', '', ?)
             """,
             (now,),
         )
@@ -252,19 +253,14 @@ class Repository:
                 existing = self._settings_from_row(
                     conn.execute("SELECT * FROM settings WHERE id = 1").fetchone()
                 )
-                if not settings.gemini_api_key:
-                    settings.gemini_api_key = existing.gemini_api_key
                 if not settings.openai_api_key:
                     settings.openai_api_key = existing.openai_api_key
             self._update_settings_conn(conn, settings)
             self._add_event_conn(conn, "info", "settings", "系统设置已保存。")
 
     def _update_settings_conn(self, conn: sqlite3.Connection, settings: AppSettings) -> None:
-        ai_provider = settings.ai_provider if settings.ai_provider in {"gemini", "openai"} else "gemini"
         check_interval = max(int(settings.check_interval or 1800), 10)
-        model = settings.ai_model.strip() or (
-            "gpt-5.5" if ai_provider == "openai" else "gemini-3-flash-preview"
-        )
+        model = settings.ai_model.strip() or DEFAULT_OPENAI_COMPAT_MODEL
         conn.execute(
             """
             UPDATE settings SET
@@ -272,8 +268,6 @@ class Repository:
                 proxy_url = ?,
                 ai_provider = ?,
                 ai_model = ?,
-                gemini_api_key = ?,
-                gemini_base_url = ?,
                 openai_api_key = ?,
                 openai_base_url = ?,
                 updated_at = ?
@@ -282,10 +276,8 @@ class Repository:
             (
                 check_interval,
                 settings.proxy_url.strip(),
-                ai_provider,
+                "openai",
                 model,
-                settings.gemini_api_key.strip(),
-                settings.gemini_base_url.strip(),
                 settings.openai_api_key.strip(),
                 settings.openai_base_url.strip(),
                 utc_now(),
@@ -296,13 +288,15 @@ class Repository:
         return AppSettings(
             check_interval=int(row["check_interval"]),
             proxy_url=row["proxy_url"] or "",
-            ai_provider=row["ai_provider"] or "gemini",
-            ai_model=row["ai_model"] or "gemini-3-flash-preview",
-            gemini_api_key=row["gemini_api_key"] or "",
-            gemini_base_url=row["gemini_base_url"] or "",
+            ai_model=self._normalize_model(row["ai_model"] or ""),
             openai_api_key=row["openai_api_key"] or "",
             openai_base_url=row["openai_base_url"] or "",
         )
+
+    def _normalize_model(self, model: str) -> str:
+        if not model or model == "gemini-3-flash-preview":
+            return DEFAULT_OPENAI_COMPAT_MODEL
+        return model
 
     def get_notifications(self) -> NotificationConfig:
         with self.connect() as conn:

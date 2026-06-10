@@ -13,7 +13,7 @@ X2TG 是一个用于监控 Twitter/X RSSHub 订阅源、翻译推文并推送到
 ## 功能
 
 - 多 RSS 源监控，每个源可单独启停和控制是否翻译。
-- 支持 Gemini / OpenAI，并可配置模型名、API Key、Base URL。
+- 支持 OpenAI 兼容接口，并可配置模型名、API Key、Base URL。
 - 支持 HTTP/HTTPS 代理。
 - 支持 Telegram 和飞书应用机器人通知渠道。
 - 历史页面只展示至少一个渠道发送成功的消息。
@@ -83,9 +83,7 @@ http://localhost:8000
 启动时如果检测到项目根目录存在 `.env`，会导入这些字段：
 
 - `RSS_URL`
-- `AI_PROVIDER`
-- `GEMINI_API_KEY`
-- `GEMINI_BASE_URL`
+- `AI_MODEL`
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `TG_BOT_TOKEN`
@@ -125,14 +123,14 @@ TZ=Asia/Shanghai
 - `app/templates/`：Jinja2 页面模板。
 - `app/static/`：管理界面样式。
 - `rss_fetcher.py`：RSS 获取与解析。
-- `translator.py`：Gemini/OpenAI 翻译。
+- `translator.py`：OpenAI 兼容接口翻译。
 - `notifier.py`：Telegram/飞书发送。
 - `main.py`：兼容入口，启动 Web 服务。
 
 ## 注意事项
 
 - 公共 RSSHub 实例可能不稳定，建议使用自建或稳定 RSSHub。
-- Telegram、Gemini、OpenAI 在中国大陆网络环境下通常需要代理。
+- Telegram 和 OpenAI 兼容接口在中国大陆网络环境下通常需要代理。
 - 当前登录保护按私有自用设计；公网部署建议放在 HTTPS 反向代理后面，并设置稳定的 `SECRET_KEY`。
 - 成功发送至少一个通知渠道后才会推进 RSS 进度；全部渠道失败会保留进度，便于下次重试。
 

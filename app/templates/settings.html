@@ -4,11 +4,11 @@
 <header class="page-header">
   <div>
     <h1>系统设置</h1>
-    <p>代理、大模型 API 和检查间隔会在保存后被后台任务重新加载。</p>
+    <p>代理、OpenAI 兼容接口和检查间隔会在保存后被后台任务重新加载。</p>
   </div>
 </header>
 
-<form method="post" action="/settings" class="panel form-grid">
+<form method="post" action="/settings" class="panel form-grid settings-form">
   <label>
     检查间隔（秒）
     <input name="check_interval" type="number" min="10" value="{{ settings.check_interval }}" required>
@@ -24,33 +24,24 @@
     </div>
   </label>
   <label>
-    AI Provider
-    <select name="ai_provider">
-      <option value="gemini" {{ 'selected' if settings.ai_provider == 'gemini' else '' }}>Gemini</option>
-      <option value="openai" {{ 'selected' if settings.ai_provider == 'openai' else '' }}>OpenAI</option>
-    </select>
+    模型名
+    <input id="ai-model-input" name="ai_model" value="{{ settings.ai_model }}" placeholder="gpt-4o-mini">
   </label>
   <label>
-    模型名
-    <input name="ai_model" value="{{ settings.ai_model }}" placeholder="gemini-3-flash-preview">
+    <span class="label-row">
+      <span>Base URL</span>
+      <span id="ai-test-result" class="field-hint"></span>
+    </span>
+    <div class="input-action-row">
+      <input id="openai-base-url-input" name="openai_base_url" value="{{ settings.openai_base_url }}" placeholder="https://api.openai.com/v1">
+      <button id="test-ai-button" type="button" class="secondary">测试接口</button>
+    </div>
   </label>
-  <label data-provider-field="gemini">
-    Gemini API Key
-    <input name="gemini_api_key" type="password" value="{{ secret_placeholder if settings.gemini_api_key else '' }}" autocomplete="new-password">
+  <label>
+    API Key
+    <input id="openai-api-key-input" name="openai_api_key" type="password" value="{{ secret_placeholder if settings.openai_api_key else '' }}" autocomplete="new-password">
   </label>
-  <label data-provider-field="gemini">
-    Gemini Base URL
-    <input name="gemini_base_url" value="{{ settings.gemini_base_url }}" placeholder="https://generativelanguage.googleapis.com">
-  </label>
-  <label data-provider-field="openai">
-    OpenAI API Key
-    <input name="openai_api_key" type="password" value="{{ secret_placeholder if settings.openai_api_key else '' }}" autocomplete="new-password">
-  </label>
-  <label data-provider-field="openai">
-    OpenAI Base URL
-    <input name="openai_base_url" value="{{ settings.openai_base_url }}" placeholder="https://api.openai.com/v1">
-  </label>
-  <div class="form-actions">
+  <div class="form-actions settings-save-row">
     <button type="submit">保存设置</button>
   </div>
 </form>
@@ -58,18 +49,11 @@
   const proxyButton = document.getElementById("test-proxy-button");
   const proxyInput = document.getElementById("proxy-url-input");
   const proxyResult = document.getElementById("proxy-test-result");
-  const providerSelect = document.querySelector('select[name="ai_provider"]');
-  const providerFields = document.querySelectorAll("[data-provider-field]");
-
-  const updateProviderFields = () => {
-    const selectedProvider = providerSelect?.value || "gemini";
-    providerFields.forEach((field) => {
-      field.hidden = field.dataset.providerField !== selectedProvider;
-    });
-  };
-
-  providerSelect?.addEventListener("change", updateProviderFields);
-  updateProviderFields();
+  const aiButton = document.getElementById("test-ai-button");
+  const aiResult = document.getElementById("ai-test-result");
+  const aiModelInput = document.getElementById("ai-model-input");
+  const apiKeyInput = document.getElementById("openai-api-key-input");
+  const baseUrlInput = document.getElementById("openai-base-url-input");
 
   proxyButton?.addEventListener("click", async () => {
     proxyButton.disabled = true;
@@ -91,6 +75,30 @@
       proxyButton.disabled = false;
     }
   });
+
+  aiButton?.addEventListener("click", async () => {
+    aiButton.disabled = true;
+    aiResult.className = "field-hint";
+    aiResult.textContent = "正在测试...";
+    try {
+      const response = await fetch("/api/test-ai", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          model: aiModelInput.value.trim(),
+          api_key: apiKeyInput.value,
+          base_url: baseUrlInput.value.trim(),
+        }),
+      });
+      const data = await response.json();
+      aiResult.textContent = data.message || "测试完成";
+      aiResult.className = `field-hint ${data.ok ? "success" : "error"}`;
+    } catch (error) {
+      aiResult.textContent = `测试失败：${error}`;
+      aiResult.className = "field-hint error";
+    } finally {
+      aiButton.disabled = false;
+    }
+  });
 </script>
 {% endblock %}
-

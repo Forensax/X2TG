@@ -283,7 +283,7 @@ class Monitor:
         lines = [
             "🤖 X2TG Web 服务已启动",
             f"⏱️ 检查间隔: {config.settings.check_interval} 秒",
-            f"🧠 翻译模型: {config.settings.ai_provider.upper()} / {config.settings.ai_model}",
+            f"🧠 翻译模型: OpenAI 兼容 / {config.settings.ai_model}",
             f"📢 通知渠道: {', '.join(config.notifications.enabled_channels) or '无'}",
             f"📋 启用 RSS 源: {len([s for s in config.sources if s.enabled])}",
         ]

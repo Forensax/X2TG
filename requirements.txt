@@ -1,5 +1,4 @@
 feedparser
-google-genai
 requests
 python-dotenv
 html2text

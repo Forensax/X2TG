@@ -16,6 +16,7 @@ from app.monitor import Monitor
 from config import (
     DEFAULT_DATABASE_URL,
     DEFAULT_FEISHU_API_BASE,
+    DEFAULT_OPENAI_COMPAT_MODEL,
     AppSettings,
     FeishuConfig,
     NotificationConfig,
@@ -26,6 +27,7 @@ from config import (
 )
 from notifier import send_plain_message, successful_channels
 from rss_fetcher import fetch_latest_link
+from translator import build_openai_client
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -182,10 +184,7 @@ async def save_settings(
     request: Request,
     check_interval: int = Form(1800),
     proxy_url: str = Form(""),
-    ai_provider: str = Form("gemini"),
     ai_model: str = Form(""),
-    gemini_api_key: str = Form(""),
-    gemini_base_url: str = Form(""),
     openai_api_key: str = Form(""),
     openai_base_url: str = Form(""),
 ):
@@ -196,10 +195,7 @@ async def save_settings(
         AppSettings(
             check_interval=check_interval,
             proxy_url=proxy_url,
-            ai_provider=ai_provider,
             ai_model=ai_model,
-            gemini_api_key="" if gemini_api_key == SECRET_PLACEHOLDER else gemini_api_key,
-            gemini_base_url=gemini_base_url,
             openai_api_key="" if openai_api_key == SECRET_PLACEHOLDER else openai_api_key,
             openai_base_url=openai_base_url,
         ),
@@ -495,6 +491,55 @@ async def api_test_proxy(request: Request):
                 "ok": False,
                 "latency_ms": latency_ms,
                 "message": f"代理测试失败，耗时 {latency_ms} ms：{exc}",
+            },
+            status_code=200,
+        )
+
+
+@app.post("/api/test-ai")
+async def api_test_ai(request: Request):
+    redirect = require_auth(request)
+    if redirect:
+        return JSONResponse({"ok": False, "message": "未登录"}, status_code=401)
+
+    payload = await request.json()
+    existing = repo.get_settings()
+    api_key = str(payload.get("api_key", "")).strip()
+    if not api_key or api_key == SECRET_PLACEHOLDER:
+        api_key = existing.openai_api_key
+    base_url = str(payload.get("base_url", "")).strip()
+    model = str(payload.get("model", "")).strip() or DEFAULT_OPENAI_COMPAT_MODEL
+
+    if not api_key:
+        return JSONResponse(
+            {"ok": False, "message": "请先填写或保存 OpenAI 兼容 API Key。"},
+            status_code=400,
+        )
+
+    started = time.perf_counter()
+    try:
+        client = build_openai_client(api_key, base_url)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": "Reply with OK."}],
+            max_tokens=8,
+        )
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        content = ""
+        if response.choices:
+            content = response.choices[0].message.content or ""
+        return {
+            "ok": True,
+            "latency_ms": latency_ms,
+            "message": f"接口测试完成，延迟 {latency_ms} ms，模型返回：{content.strip() or '空内容'}。",
+        }
+    except Exception as exc:
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        return JSONResponse(
+            {
+                "ok": False,
+                "latency_ms": latency_ms,
+                "message": f"接口测试失败，耗时 {latency_ms} ms：{exc}",
             },
             status_code=200,
         )

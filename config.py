@@ -15,6 +15,7 @@ load_dotenv()
 
 DEFAULT_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/x2tg.db")
 DEFAULT_FEISHU_API_BASE = "https://open.feishu.cn/open-apis"
+DEFAULT_OPENAI_COMPAT_MODEL = "gpt-4o-mini"
 SECRET_PLACEHOLDER = "********"
 
 
@@ -51,24 +52,17 @@ def parse_rss_configs(raw_value: Optional[str]) -> list[dict]:
 class AppSettings:
     check_interval: int = 1800
     proxy_url: str = ""
-    ai_provider: str = "gemini"
-    ai_model: str = "gemini-3-flash-preview"
-    gemini_api_key: str = ""
-    gemini_base_url: str = ""
+    ai_model: str = DEFAULT_OPENAI_COMPAT_MODEL
     openai_api_key: str = ""
     openai_base_url: str = ""
 
     @property
     def active_api_key(self) -> str:
-        if self.ai_provider == "openai":
-            return self.openai_api_key
-        return self.gemini_api_key
+        return self.openai_api_key
 
     @property
     def active_base_url(self) -> str:
-        if self.ai_provider == "openai":
-            return self.openai_base_url
-        return self.gemini_base_url
+        return self.openai_base_url
 
 
 @dataclass
@@ -144,9 +138,7 @@ def load_legacy_env(env_path: str = ".env") -> dict:
             values.update(_read_env_file(env_path))
     for key in (
         "RSS_URL",
-        "AI_PROVIDER",
-        "GEMINI_API_KEY",
-        "GEMINI_BASE_URL",
+        "AI_MODEL",
         "OPENAI_API_KEY",
         "OPENAI_BASE_URL",
         "TG_BOT_TOKEN",
@@ -179,8 +171,6 @@ def _read_env_file(env_path: str) -> dict:
 
 
 def settings_from_legacy_env(values: dict) -> AppSettings:
-    provider = values.get("AI_PROVIDER", "gemini").lower()
-    default_model = "gpt-5.5" if provider == "openai" else "gemini-3-flash-preview"
     try:
         interval = int(values.get("CHECK_INTERVAL") or 1800)
     except ValueError:
@@ -188,10 +178,7 @@ def settings_from_legacy_env(values: dict) -> AppSettings:
     return AppSettings(
         check_interval=max(interval, 10),
         proxy_url=values.get("PROXY_URL", ""),
-        ai_provider=provider if provider in {"gemini", "openai"} else "gemini",
-        ai_model=values.get("AI_MODEL", default_model),
-        gemini_api_key=values.get("GEMINI_API_KEY", ""),
-        gemini_base_url=values.get("GEMINI_BASE_URL", ""),
+        ai_model=values.get("AI_MODEL", DEFAULT_OPENAI_COMPAT_MODEL),
         openai_api_key=values.get("OPENAI_API_KEY", ""),
         openai_base_url=values.get("OPENAI_BASE_URL", ""),
     )

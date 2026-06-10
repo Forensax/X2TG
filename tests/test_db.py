@@ -19,7 +19,7 @@ class RepositoryTests(unittest.TestCase):
                 "\n".join(
                     [
                         "RSS_URL=https://rsshub.app/twitter/user/elonmusk@T,https://rsshub.app/twitter/user/NASA@F",
-                        "AI_PROVIDER=openai",
+                        "AI_MODEL=gpt-test",
                         "OPENAI_API_KEY=sk-test",
                         "OPENAI_BASE_URL=https://example.test/v1",
                         "TG_BOT_TOKEN=tg-token",
@@ -44,8 +44,9 @@ class RepositoryTests(unittest.TestCase):
             notifications = repo.get_notifications()
             sources = repo.list_sources()
 
-            self.assertEqual(settings.ai_provider, "openai")
+            self.assertEqual(settings.ai_model, "gpt-test")
             self.assertEqual(settings.openai_api_key, "sk-test")
+            self.assertEqual(settings.openai_base_url, "https://example.test/v1")
             self.assertEqual(settings.proxy_url, "http://127.0.0.1:7890")
             self.assertEqual(settings.check_interval, 120)
             self.assertTrue(notifications.telegram.enabled)
@@ -58,12 +59,12 @@ class RepositoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Repository(f"sqlite:///{Path(tmp) / 'x2tg.db'}")
             repo.initialize()
-            repo.save_settings(AppSettings(gemini_api_key="first-key"), keep_blank_secrets=False)
+            repo.save_settings(AppSettings(openai_api_key="first-key"), keep_blank_secrets=False)
 
-            repo.save_settings(AppSettings(check_interval=60, gemini_api_key=""), keep_blank_secrets=True)
+            repo.save_settings(AppSettings(check_interval=60, openai_api_key=""), keep_blank_secrets=True)
 
             settings = repo.get_settings()
-            self.assertEqual(settings.gemini_api_key, "first-key")
+            self.assertEqual(settings.openai_api_key, "first-key")
             self.assertEqual(settings.check_interval, 60)
 
     def test_sent_message_is_inserted_once(self):

@@ -268,6 +268,14 @@ button.small {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.settings-form .settings-save-row {
+  border-top: 1px solid var(--line);
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  margin-top: 4px;
+  padding-top: 16px;
+}
+
 .filter-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
